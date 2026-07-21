@@ -1,4 +1,4 @@
-# Jarvis AI API
+# Projet FULSTACK
 
 API FastAPI minimale qui envoie les messages à Mistral.
 
