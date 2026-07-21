@@ -3,9 +3,11 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from services.llm import MistralAPIError, MistralClient
+from services.qdrant_store import QdrantStore, QdrantStoreError
 
 load_dotenv()
 
@@ -16,11 +18,26 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+    sources: list[dict] = Field(default_factory=list)
+
+
+class Document(BaseModel):
+    text: str = Field(min_length=1, max_length=50_000)
+    metadata: dict = Field(default_factory=dict)
+
+
+class DocumentsRequest(BaseModel):
+    documents: list[Document] = Field(min_length=1, max_length=100)
+
+
+class DocumentsResponse(BaseModel):
+    indexed: int
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.llm = MistralClient()
+    app.state.qdrant = QdrantStore()
     yield
 
 
@@ -39,16 +56,36 @@ def create_app() -> FastAPI:
     async def ping() -> dict[str, str]:
         return {"message": "pong"}
 
+    @application.get("/qdrant/health")
+    async def qdrant_health(request: Request) -> dict[str, str]:
+        try:
+            await run_in_threadpool(request.app.state.qdrant.healthcheck)
+        except QdrantStoreError as error:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+        return {"message": "qdrant connected"}
+
+    @application.post("/documents", response_model=DocumentsResponse, status_code=status.HTTP_201_CREATED)
+    async def index_documents(payload: DocumentsRequest, request: Request) -> DocumentsResponse:
+        documents = [document.model_dump() for document in payload.documents]
+        try:
+            vectors = await request.app.state.llm.get_embeddings([document["text"] for document in documents])
+            indexed = await run_in_threadpool(request.app.state.qdrant.upsert, documents, vectors)
+        except (MistralAPIError, QdrantStoreError) as error:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+        return DocumentsResponse(indexed=indexed)
+
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
         try:
-            response = await request.app.state.llm.get_response(payload.message)
-        except MistralAPIError as error:
+            vector = (await request.app.state.llm.get_embeddings([payload.message]))[0]
+            sources = await run_in_threadpool(request.app.state.qdrant.search, vector)
+            response = await request.app.state.llm.get_response(payload.message, [source["text"] for source in sources])
+        except (MistralAPIError, QdrantStoreError) as error:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(error),
             ) from error
-        return ChatResponse(response=response)
+        return ChatResponse(response=response, sources=sources)
 
     return application
 
