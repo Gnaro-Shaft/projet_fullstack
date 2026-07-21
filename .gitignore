@@ -10,3 +10,6 @@ dist/
 build/
 .DS_Store
 **/.DS_Store
+data/raw/service-public/*.zip
+data/raw/service-public/*.tmp
+data/raw/service-public/manifest.json
