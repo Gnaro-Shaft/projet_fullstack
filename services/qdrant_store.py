@@ -39,14 +39,8 @@ class QdrantStore:
                     ),
                 )
 
-            for field_name in ("document_id", "source"):
-                self.client.create_payload_index(
-                    collection_name=self.collection_name,
-                    field_name=field_name,
-                    field_schema=models.PayloadSchemaType.KEYWORD,
-                    wait=True,
-                )
-                self._ensure_payload_indexes()
+            # Les index sont nécessaires aux filtres utilisés pendant la synchronisation.
+            self._ensure_payload_indexes()
         except Exception as error:
             raise QdrantStoreError(
                 "Unable to initialise the Qdrant collection."
@@ -165,12 +159,27 @@ class QdrantStore:
         except Exception as error:
             raise QdrantStoreError(f"Unable to delete document {document_id} from Qdrant.") from error
 
-    def search(self, vector: list[float], limit: int = 4) -> list[dict[str, Any]]:
+    def search(self, vector: list[float], limit: int = 12) -> list[dict[str, Any]]:
+        """Retourne les candidats Qdrant avec leurs métadonnées de source."""
         try:
             hits = self.client.query_points(collection_name=self.collection_name, query=vector, limit=limit, with_payload=True).points
         except Exception as error:
             raise QdrantStoreError("Unable to search Qdrant.") from error
-        return [{"text": hit.payload.get("text", ""), "metadata": hit.payload.get("metadata", {}), "score": hit.score} for hit in hits]
+        results = []
+        for hit in hits:
+            payload = hit.payload or {}
+            results.append(
+                {
+                    "text": payload.get("text", ""),
+                    "document_id": payload.get("document_id"),
+                    "title": payload.get("title"),
+                    "url": payload.get("url"),
+                    "modified_at": payload.get("modified_at"),
+                    "metadata": payload.get("metadata", {}),
+                    "score": hit.score,
+                }
+            )
+        return results
     
     def _ensure_payload_indexes(self) -> None:
         for field_name in ("document_id", "source"):
