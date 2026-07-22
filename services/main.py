@@ -87,8 +87,10 @@ def create_app() -> FastAPI:
 
             # Le modèle reçoit plusieurs fragments pour couvrir toute la réponse.
             context_chunks = rerank_results(payload.message, candidates, top_k=8, deduplicate=False)
-            # L'interface reçoit une seule citation par fiche, plus lisible.
-            sources = rerank_results(payload.message, candidates, top_k=4, deduplicate=True)
+            # Les citations sont choisies parmi les fragments réellement envoyés
+            # au modèle. Ainsi, une fiche utilisée en 5e, 6e ou 7e position
+            # ne peut pas disparaître de la liste des sources affichées.
+            sources = rerank_results(payload.message, context_chunks, top_k=8, deduplicate=True)
             if not context_chunks:
                 return ChatResponse(
                     response="Je ne trouve pas cette information dans les documents disponibles.",

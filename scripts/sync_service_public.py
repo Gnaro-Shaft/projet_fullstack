@@ -29,8 +29,11 @@ async def synchronize(
     llm: MistralClient | None = None,
     qdrant: QdrantStore | None = None,
     limit: int | None = None,
+    offset: int = 0,
 ) -> dict[str, int | bool]:
     """Download, extract, and update only documents whose source content changed."""
+    if offset < 0 or (limit is not None and limit <= 0):
+        raise ValueError("offset must be positive and limit must be greater than zero.")
     changed = download_if_changed()
     grouped_documents = defaultdict(list)
 
@@ -40,7 +43,9 @@ async def synchronize(
     document_groups = list(grouped_documents.items())
 
     if limit is not None:
-        document_groups = document_groups[:limit]
+        document_groups = document_groups[offset : offset + limit]
+    elif offset:
+        document_groups = document_groups[offset:]
 
     llm = llm or MistralClient()
     qdrant = qdrant or QdrantStore()
@@ -64,7 +69,7 @@ async def synchronize(
 
     deleted_ids = set()
 
-    if limit is None:
+    if limit is None and offset == 0:
         deleted_ids = set(existing_hashes) - set(document_id for document_id, _ in document_groups)
     for document_id in deleted_ids:
         qdrant.delete_document(document_id, SOURCE)
@@ -86,6 +91,12 @@ if __name__ == "__main__":
         type=int,
         help="Nombre maximal de fiches à indexer pour un test.",
     )
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        help="Position de départ dans les fiches à traiter.",
+    )
     args = parser.parse_args()
 
-    asyncio.run(synchronize(limit=args.limit))
+    asyncio.run(synchronize(limit=args.limit, offset=args.offset))

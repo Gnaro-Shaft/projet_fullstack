@@ -111,7 +111,8 @@ def main() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Affiche l'historique de la conversation au centre de la page.
+    # Une seule question et une seule réponse sont affichées à la fois.
+    # Cela évite d'allonger la page à chaque nouvelle recherche.
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -132,7 +133,6 @@ def main() -> None:
 
     if submitted and question.strip():
         clean_question = question.strip()
-        st.session_state.messages.append({"role": "user", "content": clean_question})
         with st.spinner("Recherche dans les fiches officielles…"):
             result = ask_backend(clean_question)
 
@@ -143,9 +143,11 @@ def main() -> None:
             answer = result.get("response", "Aucune réponse reçue.")
             sources = result.get("sources", [])
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": answer, "sources": sources}
-        )
+        # On remplace l'ancien échange au lieu de l'ajouter à l'historique.
+        st.session_state.messages = [
+            {"role": "user", "content": clean_question},
+            {"role": "assistant", "content": answer, "sources": sources},
+        ]
         st.rerun()
 
 

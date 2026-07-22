@@ -1,0 +1,14 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# L'interface n'a besoin que de trois dépendances.
+COPY requirements.frontend.txt .
+RUN pip install --no-cache-dir -r requirements.frontend.txt
+
+COPY frontend ./frontend
+
+EXPOSE 8501
+
+# Fly.io fournit le port dans la variable PORT.
+CMD ["sh", "-c", "streamlit run frontend/streamlit_app.py --server.address 0.0.0.0 --server.port ${PORT:-8501}"]

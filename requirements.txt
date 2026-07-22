@@ -45,7 +45,7 @@ pydantic            # Validation et sérialisation des modèles de données
 # Configuration
 # ==========================
 
-python-dotenv==1.2.1# Chargement des variables d'environnement depuis le fichier .env
+python-dotenv==1.2.1  # Chargement des variables d'environnement depuis le fichier .env
 
 # ==========================
 # Persistence
