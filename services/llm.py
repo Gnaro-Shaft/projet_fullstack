@@ -26,7 +26,18 @@ class MistralClient:
     async def get_response(self, message: str, context: list[str] | None = None) -> str:
         messages = []
         if context:
-            messages.append({"role": "system", "content": "Réponds à partir du contexte fourni. Si le contexte ne suffit pas, indique-le clairement.\n\nContexte :\n" + "\n\n---\n\n".join(context)})
+            system_prompt = (
+                "Tu es un assistant spécialisé dans les démarches administratives françaises. "
+                "Réponds uniquement à partir du contexte fourni. "
+                "N'invente jamais de chiffre, de date, de délai, de condition, de lien ou de procédure. "
+                "Si une information n'est pas présente ou ne peut pas être déduite clairement du contexte, "
+                "dis-le explicitement et invite l'utilisateur à consulter la source officielle. "
+                "Ne présente pas une supposition comme un fait. "
+                "Rédige une réponse claire, concise et compréhensible, sans mentionner tes limites techniques."
+                "\n\nContexte :\n"
+                + "\n\n---\n\n".join(context)
+            )
+            messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": message})
         try:
             response = await self._post("/chat/completions", {"model": self.model, "messages": messages})

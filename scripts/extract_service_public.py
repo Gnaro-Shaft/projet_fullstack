@@ -74,16 +74,29 @@ def extract_documents(archive_path: Path = ARCHIVE_PATH) -> list[ServicePublicDo
 
             document_id = root.attrib.get("ID")
             title = root.findtext("dc:title", namespaces=DC_NAMESPACE)
+            # Certaines fiches utilisent ``ListeSituations`` pour leur contenu,
+            # tandis que d'autres (comme F10999) utilisent un bloc ``Texte``
+            # directement sous ``Publication``. Il faut lire les deux formats.
+            content_nodes = (
+                root.find("Introduction"),
+                root.find("ListeSituations"),
+                root.find("Texte"),
+            )
             body = " ".join(
                 " ".join(node.itertext())
-                for node in (root.find("Introduction"), root.find("ListeSituations"))
+                for node in content_nodes
                 if node is not None
             )
             text = normalize_text(body)
             if not document_id or not title or not text:
                 continue
 
-            source_hash = hashlib.sha256(raw_xml).hexdigest()
+            # La version d'extraction est incluse pour réindexer une fiche
+            # lorsque son contenu provient du nouveau format ``Texte``.
+            hash_input = raw_xml
+            if root.find("Texte") is not None:
+                hash_input += b"\nextractor-content-v2"
+            source_hash = hashlib.sha256(hash_input).hexdigest()
             for index, chunk in enumerate(split_into_chunks(text)):
                 documents.append(
                     ServicePublicDocument(

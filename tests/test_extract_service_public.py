@@ -33,3 +33,20 @@ def test_split_into_chunks_keeps_the_final_chunk_once() -> None:
 
     assert len(chunks) == 3
     assert chunks[-1] == "a" * 900
+
+
+def test_extract_documents_reads_top_level_texte_content(tmp_path) -> None:
+    archive_path = tmp_path / "service-public.zip"
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <Publication xmlns:dc="http://purl.org/dc/elements/1.1/" ID="F10999">
+      <dc:title>Paiement en espèces</dc:title>
+      <dc:date>modified 2026-07-21</dc:date>
+      <Introduction><Texte><Paragraphe>Introduction.</Paragraphe></Texte></Introduction>
+      <Texte><Chapitre><Paragraphe>Le montant est limité dans certains cas.</Paragraphe></Chapitre></Texte>
+    </Publication>"""
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("F10999.xml", xml)
+
+    documents = extract_documents(archive_path)
+
+    assert "Le montant est limité" in documents[0].text
