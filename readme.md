@@ -68,6 +68,41 @@ python scripts/sync_service_public.py
 Le premier lancement indexe toutes les fiches ; les suivants ne créent des
 embeddings que pour les fiches nouvelles ou modifiées.
 
+Pour mesurer le retrieval sur les questions de référence :
+
+```bash
+python -m scripts.evaluate_golden_set
+```
+
+Le résultat affiche le `recall@4` et les IDs effectivement retrouvés.
+
+## Interface Streamlit
+
+Dans un second terminal, démarre l'interface :
+
+```bash
+streamlit run frontend/streamlit_app.py
+```
+
+Elle utilise `BACKEND_URL` (par défaut `http://localhost:8000`) et affiche
+l'historique du chat ainsi que les sources officielles retournées par l'API.
+
+Les appels Mistral retentent automatiquement les erreurs temporaires (`429`,
+`500`, `502`, `503`, `504`). `MISTRAL_MAX_RETRIES` permet de régler le nombre
+de tentatives.
+
+L'API anonymise les e-mails et téléphones avec des règles déterministes. La
+reconnaissance spaCy des personnes, organisations et lieux est désactivée par
+défaut pour éviter les faux positifs ; elle peut être activée après validation :
+
+```bash
+python -m spacy download fr_core_news_sm
+```
+
+```env
+PII_ENABLE_NER=true
+```
+
 ## Tests
 
 ```bash

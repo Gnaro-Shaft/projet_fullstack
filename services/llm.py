@@ -1,4 +1,6 @@
+import asyncio
 import os
+import random
 
 import httpx
 
@@ -8,11 +10,18 @@ class MistralAPIError(Exception):
 
 
 class MistralClient:
-    def __init__(self, api_key: str | None = None, base_url: str | None = None, model: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
+        max_retries: int | None = None,
+    ) -> None:
         self.api_key = api_key or os.getenv("MISTRAL_API_KEY")
         self.base_url = (base_url or os.getenv("MISTRAL_URL", "https://api.mistral.ai/v1")).rstrip("/")
         self.model = model or os.getenv("MISTRAL_MODEL", "mistral-small-latest")
         self.embedding_model = os.getenv("MISTRAL_EMBEDDING_MODEL", "mistral-embed")
+        self.max_retries = max_retries if max_retries is not None else int(os.getenv("MISTRAL_MAX_RETRIES", "5"))
 
     async def get_response(self, message: str, context: list[str] | None = None) -> str:
         messages = []
@@ -43,10 +52,47 @@ class MistralClient:
     async def _post(self, endpoint: str, payload: dict) -> dict:
         if not self.api_key:
             raise MistralAPIError("MISTRAL_API_KEY is not configured.")
+
+        retryable_statuses = {429, 500, 502, 503, 504}
+        for attempt in range(self.max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        f"{self.base_url}{endpoint}",
+                        json=payload,
+                        headers={"Authorization": f"Bearer {self.api_key}"},
+                    )
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as error:
+                status_code = error.response.status_code
+                if status_code not in retryable_statuses or attempt == self.max_retries:
+                    raise MistralAPIError(
+                        f"Mistral API returned HTTP {status_code}: {self._error_message(error.response)}"
+                    ) from error
+
+                # Retry-After est prioritaire ; sinon on applique un backoff exponentiel.
+                wait_seconds = self._retry_after(error.response, attempt)
+                await asyncio.sleep(wait_seconds)
+            except httpx.HTTPError as error:
+                raise MistralAPIError("Mistral API request failed.") from error
+
+        raise MistralAPIError("Mistral API request failed after retries.")
+
+    @staticmethod
+    def _retry_after(response: httpx.Response, attempt: int) -> float:
+        """Calcule une attente courte et croissante entre deux tentatives."""
+        retry_after = response.headers.get("Retry-After")
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(f"{self.base_url}{endpoint}", json=payload, headers={"Authorization": f"Bearer {self.api_key}"})
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPError as error:
-            raise MistralAPIError("Mistral API request failed.") from error
+            return max(0.0, float(retry_after)) if retry_after else min(60.0, 2**attempt + random.random())
+        except ValueError:
+            return min(60.0, 2**attempt + random.random())
+
+    @staticmethod
+    def _error_message(response: httpx.Response) -> str:
+        """Extrait le message JSON de Mistral sans masquer le statut HTTP."""
+        try:
+            body = response.json()
+            return str(body.get("message") or body.get("error") or "request failed")
+        except (ValueError, TypeError):
+            return response.text[:200] or "request failed"

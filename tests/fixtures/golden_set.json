@@ -1,0 +1,12 @@
+[
+  {"question": "Comment être bien assuré pendant des vacances à l'étranger ?", "expected_document_id": "F2169"},
+  {"question": "Quelles aides financières existent quand un enfant entre à l'école ?", "expected_document_id": "F38244"},
+  {"question": "Que se passe-t-il après la recevabilité d'un dossier de surendettement ?", "expected_document_id": "F34642"},
+  {"question": "Comment fonctionne le congé de paternité si l'enfant est hospitalisé ?", "expected_document_id": "F35002"},
+  {"question": "Quel est le montant maximal d'un paiement en espèces ?", "expected_document_id": "F10999"},
+  {"question": "Quelles sont les règles de la pause déjeuner du salarié ?", "expected_document_id": "F34555"},
+  {"question": "Comment est fixé le logement de l'enfant après une séparation ?", "expected_document_id": "F18785"},
+  {"question": "Quelles sont les conditions pour obtenir un logement social ?", "expected_document_id": "F869"},
+  {"question": "Quelles aides existent pour un étudiant en situation de handicap ?", "expected_document_id": "F2326"},
+  {"question": "Comment justifier son niveau en français pour obtenir la nationalité ?", "expected_document_id": "F11926"}
+]

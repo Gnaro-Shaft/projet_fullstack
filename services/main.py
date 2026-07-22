@@ -7,7 +7,9 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from services.llm import MistralAPIError, MistralClient
+from services.pii import PIIAnonymizer
 from services.qdrant_store import QdrantStore, QdrantStoreError
+from services.reranker import rerank_results
 
 load_dotenv()
 
@@ -38,6 +40,7 @@ class DocumentsResponse(BaseModel):
 async def lifespan(app: FastAPI):
     app.state.llm = MistralClient()
     app.state.qdrant = QdrantStore()
+    app.state.pii = PIIAnonymizer()
     yield
 
 
@@ -77,15 +80,31 @@ def create_app() -> FastAPI:
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
         try:
-            vector = (await request.app.state.llm.get_embeddings([payload.message]))[0]
-            sources = await run_in_threadpool(request.app.state.qdrant.search, vector)
-            response = await request.app.state.llm.get_response(payload.message, [source["text"] for source in sources])
+            # La question anonymisée ne transmet pas directement les PII à Mistral.
+            anonymized_question = request.app.state.pii.anonymize(payload.message).text
+            vector = (await request.app.state.llm.get_embeddings([anonymized_question]))[0]
+            candidates = await run_in_threadpool(request.app.state.qdrant.search, vector, 12)
+
+            # Le modèle reçoit plusieurs fragments pour couvrir toute la réponse.
+            context_chunks = rerank_results(payload.message, candidates, top_k=8, deduplicate=False)
+            # L'interface reçoit une seule citation par fiche, plus lisible.
+            sources = rerank_results(payload.message, candidates, top_k=4, deduplicate=True)
+            if not context_chunks:
+                return ChatResponse(
+                    response="Je ne trouve pas cette information dans les documents disponibles.",
+                    sources=[],
+                )
+            response = await request.app.state.llm.get_response(anonymized_question, [chunk["text"] for chunk in context_chunks])
+            # Protection supplémentaire si le modèle reproduit une donnée personnelle.
+            response = request.app.state.pii.anonymize(response).text
         except (MistralAPIError, QdrantStoreError) as error:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(error),
             ) from error
-        return ChatResponse(response=response, sources=sources)
+        # Le texte sert au prompt, mais l'UI reçoit surtout les informations de citation.
+        public_sources = [{key: value for key, value in source.items() if key != "text"} for source in sources]
+        return ChatResponse(response=response, sources=public_sources)
 
     return application
 
