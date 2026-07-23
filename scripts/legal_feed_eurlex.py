@@ -112,26 +112,40 @@ def build_full_text_url(celex: str, language: str = "FR") -> str:
 
 def fetch_document_text(celex: str, language: str = "FR", timeout: int = 30) -> tuple[str, str]:
     """Télécharge le texte intégral, avec repli sur le XML Cellar officiel."""
-    html_urls = (
-        build_full_text_url(celex, language),
-        EURLEX_TEXT_URL.format(language=language.upper(), celex=celex),
-    )
-    for html_url in html_urls:
-        request = Request(html_url, headers={"Accept": "text/html", "User-Agent": "TrustRAG/1.0"})
-        try:
-            with urlopen(request, timeout=timeout) as response:
-                text = html_to_text(response.read())
-            if len(text) >= 200:
-                return text, html_url
-        except (HTTPError, URLError):
-            continue
+    # Les corrigenda et décisions du Tribunal utilisent parfois une version
+    # ``(01)`` absente de l'identifiant court fourni par la notification.
+    celex_candidates = [celex]
+    if not celex.endswith(")"):
+        celex_candidates.append(f"{celex}(01)")
+    for candidate in celex_candidates:
+        html_urls = (
+            build_full_text_url(candidate, language),
+            EURLEX_TEXT_URL.format(language=language.upper(), celex=candidate),
+        )
+        for html_url in html_urls:
+            request = Request(html_url, headers={"Accept": "text/html", "User-Agent": "TrustRAG/1.0"})
+            try:
+                with urlopen(request, timeout=timeout) as response:
+                    text = html_to_text(response.read())
+                if len(text) >= 200:
+                    return text, html_url
+            except (HTTPError, URLError):
+                continue
 
     # Le endpoint Cellar fournit le XML légal lorsque la page HTML n'est
     # pas disponible (acte récent, traduction absente, etc.).
-    xml_url = CELLAR_XML_URL.format(language=language.lower(), celex=celex)
-    request = Request(xml_url, headers={"Accept": "application/xml;notice=tree", "User-Agent": "TrustRAG/1.0"})
-    with urlopen(request, timeout=timeout) as response:
-        root = ElementTree.fromstring(response.read())
+    last_error: Exception | None = None
+    for candidate in celex_candidates:
+        xml_url = CELLAR_XML_URL.format(language=language.lower(), celex=candidate)
+        request = Request(xml_url, headers={"Accept": "application/xml;notice=tree", "User-Agent": "TrustRAG/1.0"})
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                root = ElementTree.fromstring(response.read())
+            break
+        except (HTTPError, URLError, ElementTree.ParseError) as error:
+            last_error = error
+    else:
+        raise last_error or LegalFeedError(f"Document EUR-Lex introuvable : {celex}")
     text = re.sub(r"\s+", " ", " ".join(root.itertext())).strip()
     if len(text) < 200:
         raise LegalFeedError(f"Texte intégral EUR-Lex vide pour {celex}.")
