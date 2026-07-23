@@ -13,6 +13,7 @@ from services.reranker import rerank_results
 class RagResult:
     response: str
     sources: list[dict[str, Any]]
+    anonymized_question: str = ""
 
 
 class RagPipeline:
@@ -43,17 +44,14 @@ class RagPipeline:
 
         if not context_chunks:
             no_result = "Je ne trouve pas cette information dans les documents disponibles."
-            self.audit.record_chat(anonymized, no_result, [])
-            return RagResult(response=no_result, sources=[])
+            return RagResult(response=no_result, sources=[], anonymized_question=anonymized)
 
         llm_context = self._format_context(context_chunks)
         response = await self.llm.get_response(anonymized, llm_context)
         response = self.pii.anonymize(response).text
 
         public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
-        self.audit.record_chat(anonymized, response, public_sources)
-
-        return RagResult(response=response, sources=public_sources)
+        return RagResult(response=response, sources=public_sources, anonymized_question=anonymized)
 
     @staticmethod
     def _format_context(chunks: list[dict[str, Any]]) -> list[str]:

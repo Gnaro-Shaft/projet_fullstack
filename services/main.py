@@ -218,17 +218,38 @@ def create_app() -> FastAPI:
 
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
+        client_ip = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+        start = time.monotonic()
         try:
             result = await request.app.state.rag.execute(payload.message)
         except (MistralAPIError, QdrantStoreError) as error:
+            elapsed = time.monotonic() - start
+            request.app.state.rag.audit.record_chat(
+                "anonymized", "", [],
+                client_ip=client_ip,
+                user_agent=user_agent,
+                response_time_ms=round(elapsed * 1000),
+                error=str(error),
+            )
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(error),
             ) from error
+        elapsed = time.monotonic() - start
+        request.app.state.rag.audit.record_chat(
+            result.anonymized_question, result.response, result.sources,
+            client_ip=client_ip,
+            user_agent=user_agent,
+            response_time_ms=round(elapsed * 1000),
+        )
         return ChatResponse(response=result.response, sources=result.sources)
 
     @application.post("/chat/stream")
     async def chat_stream(payload: ChatRequest, request: Request):
+        client_ip = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+        start = time.monotonic()
         try:
             anonymized = request.app.state.rag.pii.anonymize(payload.message).text
             vector = (await request.app.state.rag.llm.get_embeddings([anonymized]))[0]
@@ -252,12 +273,26 @@ def create_app() -> FastAPI:
                     yield f"data: {json.dumps({'token': token})}\n\n"
                 safe = request.app.state.rag.pii.anonymize(full).text
                 public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
-                request.app.state.rag.audit.record_chat(anonymized, safe, public_sources)
+                elapsed = time.monotonic() - start
+                request.app.state.rag.audit.record_chat(
+                    anonymized, safe, public_sources,
+                    client_ip=client_ip,
+                    user_agent=user_agent,
+                    response_time_ms=round(elapsed * 1000),
+                )
                 yield f"data: {json.dumps({'done': True, 'sources': public_sources})}\n\n"
 
             return StreamingResponse(generate(), media_type="text/event-stream")
 
         except (MistralAPIError, QdrantStoreError) as error:
+            elapsed = time.monotonic() - start
+            request.app.state.rag.audit.record_chat(
+                "anonymized", "", [],
+                client_ip=client_ip,
+                user_agent=user_agent,
+                response_time_ms=round(elapsed * 1000),
+                error=str(error),
+            )
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(error),

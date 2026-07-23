@@ -34,14 +34,26 @@ class AuditLogger:
         sources: list[dict[str, Any]],
         *,
         request_id: str | None = None,
+        client_ip: str | None = None,
+        user_agent: str | None = None,
+        response_time_ms: float | None = None,
+        error: str | None = None,
     ) -> dict[str, Any]:
-        """Enregistre les éléments utiles sans écrire la question originale."""
+        """Enregistre les éléments utiles sans écrire la question originale.
+
+        Les champs client_ip et user_agent sont optionnels (contexte HTTP).
+        L'IP est anonymisée (dernier octet masqué).
+        """
         event = {
             "event": "chat",
             "request_id": request_id or str(uuid4()),
             "timestamp": datetime.now(UTC).isoformat(),
             "question_sha256": hashlib.sha256(question.encode("utf-8")).hexdigest(),
             "response_length": len(response),
+            "response_time_ms": response_time_ms,
+            "client_ip": self._anonymize_ip(client_ip) if client_ip else None,
+            "user_agent": user_agent[:200] if user_agent else None,
+            "error": error,
             "sources": [
                 {
                     "document_id": source.get("document_id"),
@@ -58,6 +70,16 @@ class AuditLogger:
             audit_file.write(json.dumps(event, ensure_ascii=False) + "\n")
         logger.info("chat_audit request_id=%s sources=%s", event["request_id"], len(sources))
         return event
+
+    @staticmethod
+    def _anonymize_ip(ip: str) -> str:
+        parts = ip.rsplit(".", 1)
+        if len(parts) == 2:
+            return f"{parts[0]}.0"
+        parts = ip.rsplit(":", 1)
+        if len(parts) == 2 and ":" in ip:
+            return f"{parts[0]}:0"
+        return ip
 
     def delete_entry(self, request_id: str) -> bool:
         """Marque une entrée d'audit comme effacée (tombstone).

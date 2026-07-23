@@ -36,7 +36,7 @@ class FakePII:
 
 
 class FakeAudit:
-    def record_chat(self, question, response, sources):
+    def record_chat(self, question, response, sources, **kwargs):
         pass
 
 
