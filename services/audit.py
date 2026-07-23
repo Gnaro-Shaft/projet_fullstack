@@ -112,6 +112,15 @@ class AuditLogger:
         with self.path.open(encoding="utf-8") as f:
             return [json.loads(line) for line in f if line.strip()]
 
+    def recent_entries(self, limit: int = 20) -> list[dict[str, Any]]:
+        """Dernières entrées non effacées (sans PII)."""
+        active = self.active_entry_ids()
+        entries = [
+            e for e in self._read_entries()
+            if e.get("event") != _DELETED_FLAG and e["request_id"] in active
+        ]
+        return entries[-limit:][::-1]
+
     def active_entry_ids(self) -> set[str]:
         """IDs des entrées non effacées."""
         entries = self._read_entries()

@@ -121,6 +121,7 @@ def create_app() -> FastAPI:
                 "health": "/health",
                 "metrics": "/metrics",
                 "qdrant_health": "/qdrant/health",
+                "audit_recent": "/audit/recent",
                 "delete_conversation": "/conversations/{request_id}",
             },
         }
@@ -198,6 +199,10 @@ def create_app() -> FastAPI:
         except QdrantStoreError as error:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return DeleteDocumentResponse(document_id=document_id, source=source, deleted=True)
+
+    @application.get("/audit/recent")
+    async def audit_recent(request: Request, limit: int = 20) -> list[dict]:
+        return request.app.state.rag.audit.recent_entries(limit=min(limit, 100))
 
     @application.delete("/conversations/{request_id}", response_model=DeleteConversationResponse)
     async def delete_conversation(request_id: str, request: Request) -> DeleteConversationResponse:
