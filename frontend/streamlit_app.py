@@ -49,6 +49,19 @@ def apply_simple_style() -> None:
             padding: 1.2rem 1.4rem;
             margin: 1.5rem 0;
         }
+        .ai-notice {
+            background: #e3e3fd;
+            border-left: 4px solid #000091;
+            color: #161616;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        .legal-disclaimer {
+            color: #555555;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
         .source-card {
             background: #f6f6f6;
             border-left: 4px solid #000091;
@@ -86,8 +99,16 @@ def display_sources(sources: list[dict]) -> None:
         title = source.get("title") or source.get("document_id") or "Fiche Service Public"
         url = source.get("url")
         if url:
+            metadata_parts = []
+            if source.get("modified_at"):
+                metadata_parts.append(f"Mise à jour : {source['modified_at']}")
+            if source.get("effective_at"):
+                metadata_parts.append(f"Entrée en vigueur : {source['effective_at']}")
+            if source.get("status"):
+                metadata_parts.append(f"Statut : {source['status']}")
+            metadata = "<br><small>" + " · ".join(metadata_parts) + "</small>" if metadata_parts else ""
             st.markdown(
-                f'<div class="source-card"><a href="{url}" target="_blank">{title}</a></div>',
+                f'<div class="source-card"><a href="{url}" target="_blank">{title}</a>{metadata}</div>',
                 unsafe_allow_html=True,
             )
         else:
@@ -105,6 +126,16 @@ def main() -> None:
           <p>Une question sur vos droits ? Nous vous aidons à trouver l'information officielle.</p>
         </div>
         """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="ai-notice"><strong>Assistant utilisant une IA</strong><br>'
+        "Les réponses sont générées automatiquement à partir de sources officielles. "
+        "Vérifiez toujours la source avant d'entreprendre une démarche.</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="legal-disclaimer">Information générale : cette réponse ne constitue pas un avis juridique personnalisé.</div>',
         unsafe_allow_html=True,
     )
 

@@ -1,4 +1,5 @@
 import os
+import logging
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -6,12 +7,14 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
+from services.audit import AuditLogger
 from services.llm import MistralAPIError, MistralClient
 from services.pii import PIIAnonymizer
 from services.qdrant_store import QdrantStore, QdrantStoreError
 from services.reranker import rerank_results
 
 load_dotenv()
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 
 class ChatRequest(BaseModel):
@@ -36,11 +39,18 @@ class DocumentsResponse(BaseModel):
     indexed: int
 
 
+class DeleteDocumentResponse(BaseModel):
+    document_id: str
+    source: str
+    deleted: bool
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.llm = MistralClient()
     app.state.qdrant = QdrantStore()
     app.state.pii = PIIAnonymizer()
+    app.state.audit = AuditLogger()
     yield
 
 
@@ -77,6 +87,19 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return DocumentsResponse(indexed=indexed)
 
+    @application.delete("/documents/{document_id}", response_model=DeleteDocumentResponse)
+    async def delete_document(
+        document_id: str,
+        request: Request,
+        source: str = "service-public-vdd",
+    ) -> DeleteDocumentResponse:
+        """Supprime une fiche et tous ses fragments pour une source donnée."""
+        try:
+            await run_in_threadpool(request.app.state.qdrant.delete_document, document_id, source)
+        except QdrantStoreError as error:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+        return DeleteDocumentResponse(document_id=document_id, source=source, deleted=True)
+
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
         try:
@@ -92,10 +115,9 @@ def create_app() -> FastAPI:
             # ne peut pas disparaître de la liste des sources affichées.
             sources = rerank_results(payload.message, context_chunks, top_k=8, deduplicate=True)
             if not context_chunks:
-                return ChatResponse(
-                    response="Je ne trouve pas cette information dans les documents disponibles.",
-                    sources=[],
-                )
+                response = "Je ne trouve pas cette information dans les documents disponibles."
+                request.app.state.audit.record_chat(anonymized_question, response, [])
+                return ChatResponse(response=response, sources=[])
             response = await request.app.state.llm.get_response(anonymized_question, [chunk["text"] for chunk in context_chunks])
             # Protection supplémentaire si le modèle reproduit une donnée personnelle.
             response = request.app.state.pii.anonymize(response).text
@@ -106,6 +128,7 @@ def create_app() -> FastAPI:
             ) from error
         # Le texte sert au prompt, mais l'UI reçoit surtout les informations de citation.
         public_sources = [{key: value for key, value in source.items() if key != "text"} for source in sources]
+        request.app.state.audit.record_chat(anonymized_question, response, public_sources)
         return ChatResponse(response=response, sources=public_sources)
 
     return application

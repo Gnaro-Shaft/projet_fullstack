@@ -86,7 +86,7 @@ class QdrantStore:
         points = [
             models.PointStruct(
                 # Qdrant point ids are integers or UUIDs. UUID v5 stays stable across syncs.
-                id=str(uuid5(NAMESPACE_URL, f"service-public:{document_id}:{document['chunk_index']}")),
+                id=str(uuid5(NAMESPACE_URL, f"{source}:{document_id}:{document['chunk_index']}")),
                 vector=vector,
                 payload={
                     "document_id": document_id,
@@ -94,6 +94,8 @@ class QdrantStore:
                     "title": document["title"],
                     "url": document["url"],
                     "modified_at": document["modified_at"],
+                    "effective_at": document.get("effective_at"),
+                    "status": document.get("status", "published"),
                     "source_hash": document["source_hash"],
                     "text": document["text"],
                     "source": source,
@@ -175,6 +177,8 @@ class QdrantStore:
                     "title": payload.get("title"),
                     "url": payload.get("url"),
                     "modified_at": payload.get("modified_at"),
+                    "effective_at": payload.get("effective_at"),
+                    "status": payload.get("status"),
                     "metadata": payload.get("metadata", {}),
                     "score": hit.score,
                 }
