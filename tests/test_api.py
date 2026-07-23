@@ -12,6 +12,8 @@ class FakeLLM:
 
 
 class FakeQdrant:
+    deleted = []
+
     def healthcheck(self) -> None:
         return None
 
@@ -20,6 +22,9 @@ class FakeQdrant:
 
     def search(self, vector, limit=4):
         return [{"text": "Paris est la capitale de la France.", "metadata": {}, "score": 0.99}]
+
+    def delete_document(self, document_id, source):
+        self.deleted.append((document_id, source))
 
 
 def test_ping() -> None:
@@ -56,3 +61,19 @@ def test_index_documents() -> None:
 
     assert response.status_code == 201
     assert response.json() == {"indexed": 1}
+
+
+def test_delete_document() -> None:
+    fake_qdrant = FakeQdrant()
+    with TestClient(app) as client:
+        app.state.llm = FakeLLM()
+        app.state.qdrant = fake_qdrant
+        response = client.delete("/documents/F123?source=service-public-vdd")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "document_id": "F123",
+        "source": "service-public-vdd",
+        "deleted": True,
+    }
+    assert fake_qdrant.deleted == [("F123", "service-public-vdd")]

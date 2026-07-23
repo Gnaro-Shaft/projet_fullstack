@@ -23,6 +23,10 @@ class ServicePublicDocument:
     source_hash: str
     text: str
     chunk_index: int = 0
+    # Ces champs permettent d'exposer un état juridique explicite même
+    # lorsque la source ne fournit pas de date d'entrée en vigueur.
+    effective_at: str | None = None
+    status: str = "published"
 
 
 def normalize_text(text: str) -> str:
@@ -107,6 +111,8 @@ def extract_documents(archive_path: Path = ARCHIVE_PATH) -> list[ServicePublicDo
                         source_hash=source_hash,
                         text=chunk,
                         chunk_index=index,
+                        effective_at=None,
+                        status="published",
                     )
                 )
     return documents

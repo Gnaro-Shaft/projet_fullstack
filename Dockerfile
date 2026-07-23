@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY config ./config
 COPY services ./services
+COPY scripts ./scripts
 
 EXPOSE 8000
 
