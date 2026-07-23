@@ -134,26 +134,39 @@ def main() -> None:
 
     if not st.session_state.consent_given:
         st.markdown(
-            '<div class="consent-overlay"><div class="consent-box">'
-            "<h2>Protection de vos données</h2>"
-            "<p>Cet assistant utilise une IA pour vous aider dans vos démarches "
-            "administratives. Conformément au RGPD, nous collectons :</p>"
-            "<ul>"
-            "<li>L'empreinte chiffrée (hash) de votre question — pas le texte brut</li>"
-            "<li>Votre adresse IP (anonymisée, dernier octet masqué)</li>"
-            "<li>Le navigateur utilisé</li>"
-            "<li>Le temps de réponse et les sources consultées</li>"
-            "</ul>"
-            "<p>Aucune donnée personnelle n'est stockée en clair. "
-            "Vous pouvez demander l'effacement de vos traces à tout moment.</p>"
-            "</div></div>",
+            f"""
+            <div class="consent-overlay">
+              <div class="consent-box">
+                <h2>Protection de vos donnees</h2>
+                <p>Cet assistant utilise une IA pour vous aider dans vos demarches
+                administratives. Conformement au RGPD, nous collectons :</p>
+                <ul>
+                  <li>L'empreinte chiffree (hash) de votre question - pas le texte brut</li>
+                  <li>Votre adresse IP (anonymisee, dernier octet masque)</li>
+                  <li>Le navigateur utilise</li>
+                  <li>Le temps de reponse et les sources consulrees</li>
+                </ul>
+                <p>Aucune donnee personnelle n'est stockee en clair.
+                Vous pouvez demander l'effacement de vos traces a tout moment.</p>
+                <div style="text-align:center;margin-top:1.5rem;">
+                  <a href="?consent=1"
+                     style="display:inline-block;background:#000091;color:#fff;
+                            text-decoration:none;padding:0.6rem 2rem;border-radius:4px;
+                            font-size:1rem;font-weight:500;">
+                    Accepter et continuer
+                  </a>
+                </div>
+              </div>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
-        col1, col2, col3 = st.columns([1, 2, 1])
-        if col2.button("Accepter et continuer", type="primary", use_container_width=True):
-            st.session_state.consent_given = True
-            st.rerun()
         return
+
+    if st.query_params.get("consent") == "1":
+        st.session_state.consent_given = True
+        st.query_params.clear()
+        st.rerun()
 
     status = check_backend_status()
     dot_color = {"connecté": "#00a83e", "indisponible": "#fa5c5c", "hors ligne": "#fa5c5c"}
