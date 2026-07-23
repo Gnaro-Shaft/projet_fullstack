@@ -38,6 +38,11 @@ def apply_style() -> None:
             padding: 0.5rem 0.8rem; margin: 0.4rem 0;
         }
         .source-card a { color: #000091; }
+        .assistant-box {
+            background: #f6f6f6; border: 1px solid #ddd;
+            border-top: 4px solid #e1000f;
+            padding: 1.2rem 1.4rem; margin: 1.5rem 0;
+        }
         .feedback-btn {
             background: none; border: 1px solid #ccc; border-radius: 4px;
             padding: 2px 8px; cursor: pointer; font-size: 0.85rem;

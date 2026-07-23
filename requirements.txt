@@ -24,3 +24,4 @@ spacy
 
 # Testing
 pytest==8.4.2
+pytest-timeout>=2.3.1
