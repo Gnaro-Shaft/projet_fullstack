@@ -46,18 +46,6 @@ def apply_style() -> None:
             display: inline-block; width: 8px; height: 8px;
             border-radius: 50%; margin-right: 6px;
         }
-        .stChatMessage {
-            border-radius: 4px !important;
-        }
-        .stChatMessage[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-user"]) {
-            background: #f0f0ff !important;
-            border-left: 4px solid #000091 !important;
-        }
-        .stChatMessage[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]) {
-            background: #fff !important;
-            border: 1px solid #ddd !important;
-            border-top: 4px solid #e1000f !important;
-        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -157,14 +145,27 @@ def main() -> None:
         st.session_state.messages = []
 
     for i, msg in enumerate(st.session_state.messages):
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if msg.get("time_ms"):
-                st.caption(f"Répondu en {msg['time_ms']} ms")
-            if msg.get("sources"):
-                display_sources(msg["sources"])
-            if msg["role"] == "assistant":
-                display_feedback(i)
+        if msg["role"] == "user":
+            st.markdown(
+                f'<div style="background:#f0f0ff;border-left:4px solid #000091;'
+                f'padding:0.8rem 1rem;margin:0.8rem 0;border-radius:4px;">'
+                f'{msg["content"]}</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<div style="background:#fff;border:1px solid #ddd;'
+                f'border-top:4px solid #e1000f;'
+                f'padding:0.8rem 1rem;margin:0.8rem 0;border-radius:4px;">'
+                f'{msg["content"]}</div>',
+                unsafe_allow_html=True,
+            )
+        if msg.get("time_ms"):
+            st.caption(f"Répondu en {msg['time_ms']} ms")
+        if msg.get("sources"):
+            display_sources(msg["sources"])
+        if msg["role"] == "assistant":
+            display_feedback(i)
 
     if st.session_state.messages:
         if st.button("Nouvelle conversation", type="secondary", use_container_width=True):
