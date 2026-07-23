@@ -34,6 +34,17 @@ class MistralClient:
                 "dis-le explicitement et invite l'utilisateur à consulter la source officielle. "
                 "Ne présente pas une supposition comme un fait. "
                 "Rédige une réponse claire, concise et compréhensible, sans mentionner tes limites techniques."
+                "\n"
+                "Règles strictes :\n"
+                "- Cite les sources avec leur titre et URL à la fin de ta réponse.\n"
+                "- Ne cite JAMAIS une référence, un numéro de document, ou un lien"
+                " qui n'est pas explicitement présent dans le contexte.\n"
+                "- Utilise EXACTEMENT les mots, chiffres et descriptions du contexte."
+                " Ne les remplace par aucun synonyme."
+                " Exemple : si le contexte dit 'service en ligne',"
+                " écris 'service en ligne', pas 'téléservice' ou 'simulateur'.\n"
+                "- Si une information est absente du contexte, dis-le."
+                " N'invente rien."
                 "\n\nContexte :\n"
                 + "\n\n---\n\n".join(context)
             )

@@ -1,12 +1,142 @@
 [
-  {"question": "Comment être bien assuré pendant des vacances à l'étranger ?", "expected_document_id": "F2169"},
-  {"question": "Quelles aides financières existent quand un enfant entre à l'école ?", "expected_document_id": "F38244"},
-  {"question": "Que se passe-t-il après la recevabilité d'un dossier de surendettement ?", "expected_document_id": "F34642"},
-  {"question": "Comment fonctionne le congé de paternité si l'enfant est hospitalisé ?", "expected_document_id": "F35002"},
-  {"question": "Quel est le montant maximal d'un paiement en espèces ?", "expected_document_id": "F10999"},
-  {"question": "Quelles sont les règles de la pause déjeuner du salarié ?", "expected_document_id": "F34555"},
-  {"question": "Comment est fixé le logement de l'enfant après une séparation ?", "expected_document_id": "F18785"},
-  {"question": "Quelles sont les conditions pour obtenir un logement social ?", "expected_document_id": "F869"},
-  {"question": "Quelles aides existent pour un étudiant en situation de handicap ?", "expected_document_id": "F2326"},
-  {"question": "Comment justifier son niveau en français pour obtenir la nationalité ?", "expected_document_id": "F11926"}
+  {
+    "question": "Comment être bien assuré pendant des vacances à l'étranger ?",
+    "expected_document_id": "F2169",
+    "expected_key_facts": [
+      "vérifier sa couverture avant le départ",
+      "Carte Européenne d'Assurance Maladie",
+      "complémentaire santé"
+    ],
+    "anti_facts": [
+      "vaccins obligatoires"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Quelles aides financières existent quand un enfant entre à l'école ?",
+    "expected_document_id": "F38244",
+    "expected_key_facts": [
+      "Allocation de Rentrée Scolaire",
+      "condition de ressources",
+      "versée sous conditions"
+    ],
+    "anti_facts": [
+      "bourse au mérite"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Que se passe-t-il après la recevabilité d'un dossier de surendettement ?",
+    "expected_document_id": "F34642",
+    "expected_key_facts": [
+      "commission de surendettement",
+      "plan conventionnel de redressement",
+      "mesure recommandée"
+    ],
+    "anti_facts": [
+      "effacement automatique"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Comment fonctionne le congé de paternité si l'enfant est hospitalisé ?",
+    "expected_document_id": "F35002",
+    "expected_key_facts": [
+      "congé de paternité",
+      "hospitalisation du nouveau-né",
+      "prolongation"
+    ],
+    "anti_facts": [
+      "durée identique au congé maternité"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Quel est le montant maximal d'un paiement en espèces ?",
+    "expected_document_id": "F10999",
+    "expected_key_facts": [
+      "plafond",
+      "paiement en espèces"
+    ],
+    "anti_facts": [
+      "aucune limite",
+      "plafond identique pour tous les pays"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Quelles sont les règles de la pause déjeuner du salarié ?",
+    "expected_document_id": "F34555",
+    "expected_key_facts": [
+      "pause déjeuner",
+      "temps de pause",
+      "droit du travail"
+    ],
+    "anti_facts": [
+      "pause déjeuner obligatoire d'une heure"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Comment est fixé le logement de l'enfant après une séparation ?",
+    "expected_document_id": "F18785",
+    "expected_key_facts": [
+      "résidence de l'enfant",
+      "séparation des parents",
+      "intérêt de l'enfant"
+    ],
+    "anti_facts": [
+      "résidence automatique chez la mère"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Quelles sont les conditions pour obtenir un logement social ?",
+    "expected_document_id": "F869",
+    "expected_key_facts": [
+      "logement social",
+      "conditions de ressources",
+      "demande de logement"
+    ],
+    "anti_facts": [
+      "pas de condition de nationalité"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Quelles aides existent pour un étudiant en situation de handicap ?",
+    "expected_document_id": "F2326",
+    "expected_key_facts": [
+      "AEEH",
+      "Allocation d'Éducation",
+      "enfant handicapé"
+    ],
+    "anti_facts": [
+      "bourse automatique"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  },
+  {
+    "question": "Comment justifier son niveau en français pour obtenir la nationalité ?",
+    "expected_document_id": "F11926",
+    "expected_key_facts": [
+      "niveau de français",
+      "naturalisation",
+      "justifier son niveau"
+    ],
+    "anti_facts": [
+      "niveau C1 requis"
+    ],
+    "requires_date": false,
+    "requires_source_citation": true
+  }
 ]

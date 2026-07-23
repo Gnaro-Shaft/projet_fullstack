@@ -1,0 +1,219 @@
+{
+  "summary": {
+    "total_questions": 10,
+    "retrieval_success_rate": 1.0,
+    "avg_faithfulness": 5.0,
+    "avg_completeness": 4.6,
+    "avg_hallucination_absence": 5.0,
+    "avg_source_usage": 3.6,
+    "overall_quality": 0.91,
+    "errors": 0
+  },
+  "results": [
+    {
+      "question": "Comment être bien assuré pendant des vacances à l'étranger ?",
+      "expected_document_id": "F2169",
+      "response_preview": "Pour être bien assuré pendant des vacances à l'étranger, voici les points clés à vérifier :\n\n### **Avant le voyage**\n- **Vérifiez vos garanties existantes** : Certains contrats (assurance habitation, ",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F2169",
+        "F2485",
+        "F32833",
+        "F32556",
+        "F2694"
+      ],
+      "expected_id": "F2169",
+      "key_facts_coverage": 0.0,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 5,
+      "judge_explanation": "La réponse de l'assistant reprend intégralement les informations des documents sources sans ajout, omission ou modification. Toutes les sections ('Avant le voyage', 'Pendant le voyage', 'À vérifier absolument') et les détails (garantie annulation voyage, responsabilité civile villégiature, carte européenne d'assurance maladie, etc.) sont fidèlement extraits des documents 1, 2, 3 et 4. La source est correctement citée avec son titre et son URL exacts.",
+      "overall": 1.0
+    },
+    {
+      "question": "Quelles aides financières existent quand un enfant entre à l'école ?",
+      "expected_document_id": "F38244",
+      "response_preview": "Voici les aides financières possibles à l'entrée à l'école (primaire) :\n\n- **Allocation de rentrée scolaire (ARS)** : sous conditions de ressources, dès 6 ans.\n- **Aides pour la cantine** : sous condi",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F38244",
+        "F1885",
+        "F19294",
+        "F1883"
+      ],
+      "expected_id": "F38244",
+      "key_facts_coverage": 0.0,
+      "faithfulness": 5,
+      "completeness": 3,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse est fidèle et sans hallucination, mais elle omet des détails importants comme la 'bourse pour l'école élémentaire' (mentionnée dans les documents 1, 5 et 8) et ne cite pas correctement les sources. Les aides pour le collège, le lycée et les fonds sociaux ne sont pas incluses, alors qu'elles sont pertinentes pour la question posée.",
+      "overall": 0.8
+    },
+    {
+      "question": "Que se passe-t-il après la recevabilité d'un dossier de surendettement ?",
+      "expected_document_id": "F34642",
+      "response_preview": "Après la recevabilité d'un dossier de surendettement, la commission de surendettement établit l'état détaillé des dettes du surendetté. Elle détermine ensuite l'orientation du dossier pour proposer le",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F34642",
+        "F1946",
+        "F134",
+        "F10434",
+        "F22131"
+      ],
+      "expected_id": "F34642",
+      "key_facts_coverage": 0.3333333333333333,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "<br>La réponse couvre tous les aspects demandés par la question et reprend fidèlement les informations des documents sources. Cependant, les sources ne sont pas citées avec leurs titres et URLs exacts, mais de manière générique (ex: 'documents sources').",
+      "overall": 0.9
+    },
+    {
+      "question": "Comment fonctionne le congé de paternité si l'enfant est hospitalisé ?",
+      "expected_document_id": "F35002",
+      "response_preview": "Si l'enfant est hospitalisé immédiatement après sa naissance dans une unité de soins spécialisée, le père salarié peut bénéficier d'un congé spécifique supplémentaire.\n\n**Conditions :**\n- Le congé doi",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F35002",
+        "F583"
+      ],
+      "expected_id": "F35002",
+      "key_facts_coverage": 0.3333333333333333,
+      "faithfulness": 5,
+      "completeness": 4,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse est fidèle et sans hallucination, mais elle ne mentionne pas explicitement que le congé supplémentaire s'ajoute à la durée du congé de paternité et d'accueil de l'enfant, ni que cela concerne aussi la personne vivant en couple avec la mère (hors fonction publique). Les sources sont citées de manière vague (service-public-vdd) sans titres ni URLs.",
+      "overall": 0.85
+    },
+    {
+      "question": "Quel est le montant maximal d'un paiement en espèces ?",
+      "expected_document_id": "F10999",
+      "response_preview": "Le montant maximal d'un paiement en espèces dépend du contexte :\n\n- **Au guichet des centres des finances publiques** : limité à 300 €.\n- **Entre un particulier et un professionnel** : limité à 1 000 ",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F10999",
+        "F2421",
+        "F2424",
+        "F794",
+        "F801",
+        "F10410"
+      ],
+      "expected_id": "F10999",
+      "key_facts_coverage": 0.5,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse est entièrement fidèle au contexte et couvre tous les aspects importants de la question. Cependant, la source citée est incomplète (seul le titre est mentionné sans date ni URL complète).",
+      "overall": 0.9
+    },
+    {
+      "question": "Quelles sont les règles de la pause déjeuner du salarié ?",
+      "expected_document_id": "F34555",
+      "response_preview": "Voici les règles concernant la pause déjeuner du salarié en France :\n\n### **Obligation de pause**\n- L'employeur n'est pas obligé d'accorder une pause déjeuner spécifique, mais le salarié doit bénéfici",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F34555",
+        "F18205"
+      ],
+      "expected_id": "F34555",
+      "key_facts_coverage": 0.6666666666666666,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse de l'assistant reprend fidèlement tous les éléments du contexte, y compris les durées, les conditions et les exceptions. Cependant, les sources ne sont pas citées avec leurs titres exacts et URLs complètes, mais uniquement mentionnées de manière vague ('source officielle').",
+      "overall": 0.9
+    },
+    {
+      "question": "Comment est fixé le logement de l'enfant après une séparation ?",
+      "expected_document_id": "F18785",
+      "response_preview": "La résidence de l'enfant, c'est-à-dire son logement après une séparation, est fixée soit par accord entre les parents, soit par décision du juge aux affaires familiales (Jaf) en cas de désaccord.\n\n**E",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F18785",
+        "F1329",
+        "F3133"
+      ],
+      "expected_id": "F18785",
+      "key_facts_coverage": 0.6666666666666666,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse est fidèle et complète par rapport au contexte, couvrant tous les aspects importants (accord entre parents, décision du JAF, critères de décision, conventions parentales). Cependant, les sources sont mentionnées de manière vague ('sources officielles' sans titres exacts ni URLs complètes).",
+      "overall": 0.9
+    },
+    {
+      "question": "Quelles sont les conditions pour obtenir un logement social ?",
+      "expected_document_id": "F869",
+      "response_preview": "Pour obtenir un logement social, il faut :\n\n1. **Faire une demande** (en ligne ou avec un formulaire papier).\n2. **Ne pas dépasser un revenu maximum** (le montant dépend du nombre de personnes à loger",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F869",
+        "F282",
+        "F10007",
+        "F18005"
+      ],
+      "expected_id": "F869",
+      "key_facts_coverage": 0.6666666666666666,
+      "faithfulness": 5,
+      "completeness": 4,
+      "hallucination_absence": 5,
+      "source_usage": 3,
+      "judge_explanation": "La réponse est fidèle au contexte et couvre les conditions principales (demande, revenus, pièces justificatives). Cependant, elle omet les détails sur les critères de priorité (situation personnelle comme handicap, mal-logement, etc.) et le simulateur n'est pas correctement cité (le lien pointe vers F10007 au lieu de F869).",
+      "overall": 0.85
+    },
+    {
+      "question": "Quelles aides existent pour un étudiant en situation de handicap ?",
+      "expected_document_id": "F2326",
+      "response_preview": "Voici les aides mentionnées dans le contexte pour un étudiant en situation de handicap :\n\n**Aides financières :**\n- **Allocation d'éducation de l'enfant handicapé (AEEH)** : pour les moins de 20 ans à",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F2326",
+        "F31029"
+      ],
+      "expected_id": "F2326",
+      "key_facts_coverage": 0.0,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 5,
+      "judge_explanation": "La réponse couvre tous les aspects mentionnés dans les documents sources sans ajout ni omission. Toutes les informations sont fidèlement retranscrites, et les sources sont correctement citées avec titres et URLs.",
+      "overall": 1.0
+    },
+    {
+      "question": "Comment justifier son niveau en français pour obtenir la nationalité ?",
+      "expected_document_id": "F11926",
+      "response_preview": "Pour obtenir la nationalité française, vous devez justifier d’une connaissance de la langue française au moins égale au niveau **B2** du CECRL (oral et écrit).\n\nLes documents acceptés sont :\n- Un dipl",
+      "error": null,
+      "retrieval_success": true,
+      "retrieved_ids": [
+        "F11926",
+        "F34501"
+      ],
+      "expected_id": "F11926",
+      "key_facts_coverage": 0.0,
+      "faithfulness": 5,
+      "completeness": 5,
+      "hallucination_absence": 5,
+      "source_usage": 5,
+      "judge_explanation": "La réponse est entièrement fidèle au contexte, couvre tous les aspects de la question, ne contient aucune invention et cite correctement les sources avec leurs titres et URLs.",
+      "overall": 1.0
+    }
+  ]
+}

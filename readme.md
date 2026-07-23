@@ -76,6 +76,27 @@ python -m scripts.evaluate_golden_set
 
 Le résultat affiche le `recall@4` et les IDs effectivement retrouvés.
 
+## Évaluation de la qualité des réponses RAG
+
+Le pipeline d'évaluation teste chaque réponse sur 4 dimensions via LLM-as-judge (Mistral) :
+
+| Dimension | Score | Définition |
+|---|---|---|
+| **Fidélité** | 0–5 | La réponse reste-t-elle fidèle au contexte fourni ? |
+| **Complétude** | 0–5 | La réponse couvre-t-elle tous les aspects de la question ? |
+| **Absence d'hallucination** | 0–5 | Aucune information inventée ? |
+| **Usage des sources** | 0–5 | Les sources sont-elles correctement citées ? |
+
+Le golden set enrichi (`tests/fixtures/golden_set.json`) contient les faits attendus et les anti-faits (hallucinations typiques) pour chaque question.
+
+```bash
+# Lancer l'évaluation complète
+python -m scripts.evaluate_rag_quality --print
+
+# Sauvegarder le rapport dans un fichier
+python -m scripts.evaluate_rag_quality --output data/evaluation/rag_report.json
+```
+
 ## Synchroniser EUR-Lex
 
 Le connecteur EUR-Lex récupère les notifications récentes, identifie les
