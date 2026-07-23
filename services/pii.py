@@ -29,7 +29,7 @@ class PIIAnonymizer:
         self.enable_ner = (
             enable_ner
             if enable_ner is not None
-            else os.getenv("PII_ENABLE_NER", "false").lower() in {"1", "true", "yes"}
+            else os.getenv("PII_ENABLE_NER", "true").lower() in {"1", "true", "yes"}
         )
         if not self.enable_ner:
             # Le NER est opt-in : un modèle mal calibré peut dégrader une réponse.
