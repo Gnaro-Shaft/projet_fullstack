@@ -193,6 +193,18 @@ streamlit run frontend/streamlit_app.py
 Elle utilise `BACKEND_URL` (par défaut `http://localhost:8000`) et affiche
 l'historique du chat ainsi que les sources officielles retournées par l'API.
 
+## Streaming
+
+Un endpoint SSE permet de recevoir la réponse token par token :
+
+```bash
+curl -X POST http://localhost:8000/chat/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Quelles sont les conditions pour un logement social ?"}'
+```
+
+L'interface Streamlit affiche le temps de réponse et permet un retour utilisateur (pouce vert/rouge). L'historique persiste le temps de la session.
+
 Les appels Mistral retentent automatiquement les erreurs temporaires (`429`,
 `500`, `502`, `503`, `504`). `MISTRAL_MAX_RETRIES` permet de régler le nombre
 de tentatives.
@@ -222,3 +234,29 @@ docker compose up --build
 ```
 
 L'interface Gradio reste volontairement séparée de l'API.
+
+## Dashboard de monitoring
+
+```bash
+streamlit run frontend/dashboard.py
+```
+
+Affiche en temps réel : statut du backend, nombre de requêtes, documents indexés, uptime, healthcheck et les dernières requêtes depuis le journal d'audit.
+
+## API /metrics
+
+L'endpoint `GET /metrics` expose les métriques au format JSON :
+
+```bash
+curl http://localhost:8000/metrics
+```
+
+## API /health
+
+L'endpoint `GET /health` valide les 3 composants critiques :
+
+```bash
+curl http://localhost:8000/health
+```
+
+Retourne `503` si Qdrant, les embeddings ou le LLM sont défaillants.

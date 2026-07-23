@@ -1,5 +1,3 @@
-"""Interface Streamlit minimale pour l'assistant Service Public."""
-
 import os
 
 import httpx
@@ -12,63 +10,42 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
 
 st.set_page_config(
     page_title="Assistant Service Public",
-    page_icon="🇫🇷",
+    page_icon="\U0001f1eb\U0001f1f7",
     layout="centered",
 )
 
 
-def apply_simple_style() -> None:
-    """Applique une présentation blanche, centrée et institutionnelle."""
+def apply_style() -> None:
     st.markdown(
         """
         <style>
         .stApp { background: #ffffff; }
-        .block-container {
-            max-width: 860px;
-            padding: 5rem 1.5rem 3rem;
+        .block-container { max-width: 860px; padding: 3rem 1.5rem 3rem; }
+        .title {
+            border-top: 5px solid #000091; padding-top: 1.5rem; text-align: center;
         }
-        .page-title {
-            border-top: 5px solid #000091;
-            padding-top: 1.5rem;
-            text-align: center;
-        }
-        .page-title h1 {
-            color: #161616;
-            font-size: 2.5rem;
-            margin-bottom: 0.8rem;
-        }
-        .page-title p {
-            color: #555555;
-            font-size: 1.2rem;
-            margin-bottom: 2.5rem;
-        }
-        .assistant-box {
-            background: #f6f6f6;
-            border: 1px solid #dddddd;
-            border-top: 4px solid #e1000f;
-            padding: 1.2rem 1.4rem;
-            margin: 1.5rem 0;
-        }
+        .title h1 { color: #161616; font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .title p { color: #555; font-size: 1.1rem; margin-bottom: 1.5rem; }
         .ai-notice {
-            background: #e3e3fd;
-            border-left: 4px solid #000091;
-            color: #161616;
-            padding: 0.8rem 1rem;
-            margin: 1rem 0;
-            font-size: 0.95rem;
+            background: #e3e3fd; border-left: 4px solid #000091;
+            padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.9rem;
         }
-        .legal-disclaimer {
-            color: #555555;
-            font-size: 0.85rem;
-            margin-top: 1rem;
+        .disclaimer {
+            color: #555; font-size: 0.82rem; margin-top: 0.5rem;
         }
         .source-card {
-            background: #f6f6f6;
-            border-left: 4px solid #000091;
-            padding: 0.7rem 1rem;
-            margin: 0.5rem 0;
+            background: #f6f6f6; border-left: 4px solid #000091;
+            padding: 0.5rem 0.8rem; margin: 0.4rem 0;
         }
         .source-card a { color: #000091; }
+        .feedback-btn {
+            background: none; border: 1px solid #ccc; border-radius: 4px;
+            padding: 2px 8px; cursor: pointer; font-size: 0.85rem;
+        }
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; margin-right: 6px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -76,83 +53,112 @@ def apply_simple_style() -> None:
 
 
 def ask_backend(question: str) -> dict:
-    """Envoie une question au backend FastAPI."""
     try:
-        response = httpx.post(
-            f"{BACKEND_URL}/chat",
-            json={"message": question},
-            timeout=90.0,
-        )
-        response.raise_for_status()
-        return response.json()
+        with httpx.Client(timeout=90.0) as client:
+            response = client.post(f"{BACKEND_URL}/chat", json={"message": question})
+            response.raise_for_status()
+            elapsed = response.headers.get("x-response-time-ms", "")
+            return {**response.json(), "response_time_ms": elapsed}
     except httpx.HTTPError as error:
         return {"error": f"Le backend est indisponible : {error}"}
 
 
+def check_backend_status() -> str:
+    try:
+        r = httpx.get(f"{BACKEND_URL}/ping", timeout=5.0)
+        return "connecté" if r.status_code == 200 else "indisponible"
+    except Exception:
+        return "hors ligne"
+
+
 def display_sources(sources: list[dict]) -> None:
-    """Affiche les liens officiels associés à une réponse."""
     if not sources:
         return
-
     st.markdown("**Sources officielles**")
     for source in sources:
         title = source.get("title") or source.get("document_id") or "Fiche Service Public"
         url = source.get("url")
+        parts = []
+        if source.get("modified_at"):
+            parts.append(f"Mise à jour : {source['modified_at']}")
+        if source.get("effective_at"):
+            parts.append(f"Entrée en vigueur : {source['effective_at']}")
+        if source.get("status"):
+            parts.append(f"Statut : {source['status']}")
+        meta = f"<br><small>{' · '.join(parts)}</small>" if parts else ""
         if url:
-            metadata_parts = []
-            if source.get("modified_at"):
-                metadata_parts.append(f"Mise à jour : {source['modified_at']}")
-            if source.get("effective_at"):
-                metadata_parts.append(f"Entrée en vigueur : {source['effective_at']}")
-            if source.get("status"):
-                metadata_parts.append(f"Statut : {source['status']}")
-            metadata = "<br><small>" + " · ".join(metadata_parts) + "</small>" if metadata_parts else ""
-            st.markdown(
-                f'<div class="source-card"><a href="{url}" target="_blank">{title}</a>{metadata}</div>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(f'<div class="source-card"><a href="{url}" target="_blank">{title}</a>{meta}</div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="source-card">{title}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="source-card">{title}{meta}</div>', unsafe_allow_html=True)
+
+
+def display_feedback(msg_index: int) -> None:
+    key = f"feedback_{msg_index}"
+    if key not in st.session_state:
+        st.session_state[key] = None
+    current = st.session_state[key]
+    col1, col2, col3 = st.columns([1, 1, 8])
+    thumbs_up = col1.button("\U0001f44d", key=f"up_{msg_index}", help="Utile")
+    thumbs_down = col2.button("\U0001f44e", key=f"down_{msg_index}", help="Pas utile")
+    if thumbs_up:
+        st.session_state[key] = "up"
+        st.rerun()
+    if thumbs_down:
+        st.session_state[key] = "down"
+        st.rerun()
+    if current == "up":
+        col1.markdown("\U0001f44d **Utile**")
+    elif current == "down":
+        col2.markdown("\U0001f44e **Pas utile**")
 
 
 def main() -> None:
-    apply_simple_style()
+    apply_style()
 
-    # En-tête volontairement court : le produit principal est le chat.
+    status = check_backend_status()
+    dot_color = {"connecté": "#00a83e", "indisponible": "#fa5c5c", "hors ligne": "#fa5c5c"}
+    bg = dot_color.get(status, "#888")
     st.markdown(
-        """
-        <div class="page-title">
-          <h1>Assistant Service Public</h1>
-          <p>Une question sur vos droits ? Nous vous aidons à trouver l'information officielle.</p>
-        </div>
-        """,
+        f'<div style="text-align:right;font-size:0.8rem;color:#888;">'
+        f'<span class="status-dot" style="background:{bg}"></span>'
+        f'Backend {status}</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="title"><h1>Assistant Service Public</h1>'
+        "<p>Une question sur vos droits ? Nous vous aidons à trouver l'information officielle.</p></div>",
         unsafe_allow_html=True,
     )
     st.markdown(
         '<div class="ai-notice"><strong>Assistant utilisant une IA</strong><br>'
-        "Les réponses sont générées automatiquement à partir de sources officielles. "
+        "Les réponses sont générées à partir de sources officielles. "
         "Vérifiez toujours la source avant d'entreprendre une démarche.</div>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<div class="legal-disclaimer">Information générale : cette réponse ne constitue pas un avis juridique personnalisé.</div>',
+        '<div class="disclaimer">Information générale : cette réponse ne constitue pas un avis juridique personnalisé.</div>',
         unsafe_allow_html=True,
     )
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Une seule question et une seule réponse sont affichées à la fois.
-    # Cela évite d'allonger la page à chaque nouvelle recherche.
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-            if message.get("sources"):
-                display_sources(message["sources"])
+    for i, msg in enumerate(st.session_state.messages):
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if msg.get("time_ms"):
+                st.caption(f"Répondu en {msg['time_ms']} ms")
+            if msg.get("sources"):
+                display_sources(msg["sources"])
+            if msg["role"] == "assistant":
+                display_feedback(i)
 
-    st.markdown('<div class="assistant-box">Posez votre question sur vos droits et démarches administratives.</div>', unsafe_allow_html=True)
+    if st.session_state.messages:
+        if st.button("Nouvelle conversation", type="secondary", use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
 
-    # Un formulaire centré est utilisé plutôt que le chat_input fixe en bas de l'écran.
     with st.form("question_form", clear_on_submit=True):
         question = st.text_area(
             "Votre question",
@@ -164,21 +170,25 @@ def main() -> None:
 
     if submitted and question.strip():
         clean_question = question.strip()
-        with st.spinner("Recherche dans les fiches officielles…"):
+        with st.spinner("Recherche dans les fiches officielles\u2026"):
             result = ask_backend(clean_question)
 
         if "error" in result:
             answer = result["error"]
             sources = []
+            time_ms = ""
         else:
             answer = result.get("response", "Aucune réponse reçue.")
             sources = result.get("sources", [])
+            time_ms = result.get("response_time_ms", "")
 
-        # On remplace l'ancien échange au lieu de l'ajouter à l'historique.
-        st.session_state.messages = [
-            {"role": "user", "content": clean_question},
-            {"role": "assistant", "content": answer, "sources": sources},
-        ]
+        st.session_state.messages.append({"role": "user", "content": clean_question})
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer,
+            "sources": sources,
+            "time_ms": time_ms,
+        })
         st.rerun()
 
 

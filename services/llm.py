@@ -59,6 +59,55 @@ class MistralClient:
             raise MistralAPIError("Mistral API returned an empty response.")
         return content
 
+    async def get_response_stream(self, message: str, context: list[str] | None = None):
+        messages = []
+        if context:
+            system_prompt = (
+                "Tu es un assistant spécialisé dans les démarches administratives françaises. "
+                "Réponds uniquement à partir du contexte fourni. "
+                "N'invente jamais de chiffre, de date, de délai, de condition, de lien ou de procédure. "
+                "Si une information n'est pas présente ou ne peut pas être déduite clairement du contexte, "
+                "dis-le explicitement et invite l'utilisateur à consulter la source officielle. "
+                "Ne présente pas une supposition comme un fait. "
+                "Rédige une réponse claire, concise et compréhensible, sans mentionner tes limites techniques."
+                "\n"
+                "Règles strictes :\n"
+                "- Cite les sources avec leur titre et URL à la fin de ta réponse.\n"
+                "- Ne cite JAMAIS une référence, un numéro de document, ou un lien"
+                " qui n'est pas explicitement présent dans le contexte.\n"
+                "- Utilise EXACTEMENT les mots, chiffres et descriptions du contexte."
+                " Ne les remplace par aucun synonyme.\n"
+                "- Si une information est absente du contexte, dis-le."
+                " N'invente rien."
+                "\n\nContexte :\n"
+                + "\n\n---\n\n".join(context)
+            )
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": message})
+        if not self.api_key:
+            raise MistralAPIError("MISTRAL_API_KEY is not configured.")
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/chat/completions",
+                json={"model": self.model, "messages": messages, "stream": True},
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        if data.strip() == "[DONE]":
+                            break
+                        try:
+                            import json
+                            chunk = json.loads(data)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            if delta:
+                                yield delta
+                        except json.JSONDecodeError:
+                            continue
+
     async def get_embeddings(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             raise MistralAPIError("At least one text is required to create embeddings.")
