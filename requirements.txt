@@ -1,72 +1,26 @@
-# Development
-pytest==8.4.2
-
-# ==========================
 # Web API
-# ==========================
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
 
-fastapi==0.139.2             # Expose les services RAG via une API REST
-uvicorn[standard]==0.51.0    # Serveur ASGI exécutant l'application FastAPI
+# User Interface
+streamlit
 
-# ==========================
-# User Interfaces
-# ==========================
-
-streamlit           # Interface utilisateur finale du chatbot TrustRAG CX
-gradio              # Interface technique utilisée par Cédric pour tester le backend et le pipeline RAG
-
-# ==========================
-# RAG Orchestration
-# ==========================
-
-haystack-ai         # Orchestration du pipeline RAG (indexation, recherche et génération)
-
-# ==========================
 # LLM & Embeddings
-# ==========================
+mistralai
 
-mistralai           # SDK Mistral AI pour les embeddings et la génération de réponses
-
-# ==========================
 # Vector Database
-# ==========================
+qdrant-client
 
-qdrant-client       # Client Python permettant de communiquer avec la base vectorielle Qdrant
-
-# ==========================c
 # Data Processing
-# ==========================
+httpx==0.28.1
+lxml
+pydantic
 
-httpx==0.28.1       # Téléchargement des données depuis les sources officielles (DILA, APIs...)
-lxml                # Parsing et manipulation des fichiers XML
-pydantic            # Validation et sérialisation des modèles de données
-
-# ==========================
 # Configuration
-# ==========================
+python-dotenv==1.2.1
 
-python-dotenv==1.2.1  # Chargement des variables d'environnement depuis le fichier .env
-
-# ==========================
-# Persistence
-# ==========================
-
-psycopg             # Accès à PostgreSQL (état des conversations, feedback utilisateur...)
-boto3               # Accès au stockage AWS S3 (corpus, artefacts, exports...)
-
-# ==========================
-# Experiment Tracking
-# ==========================
-
-mlflow              # Suivi des expérimentations, métriques, modèles et artefacts
-
-# ==========================
 # AI Governance
-# ==========================
+spacy
 
-spacy               # Détection et anonymisation des données personnelles (PII)
-
-# ========================== 
-# Testing 
-# ==========================
-pytest==8.4.2       # Framework de tests automatisés pour valider le fonctionnement du projet
+# Testing
+pytest==8.4.2

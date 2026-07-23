@@ -12,7 +12,7 @@ from services.audit import AuditLogger
 from services.llm import MistralAPIError, MistralClient
 from services.pii import PIIAnonymizer
 from services.qdrant_store import QdrantStore, QdrantStoreError
-from services.reranker import rerank_results
+from services.rag.pipeline import RagPipeline
 
 load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -48,10 +48,11 @@ class DeleteDocumentResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.llm = MistralClient()
-    app.state.qdrant = QdrantStore()
-    app.state.pii = PIIAnonymizer()
-    app.state.audit = AuditLogger()
+    llm = MistralClient()
+    qdrant = QdrantStore()
+    pii = PIIAnonymizer()
+    audit = AuditLogger()
+    app.state.rag = RagPipeline(llm=llm, qdrant=qdrant, pii=pii, audit=audit)
     yield
 
 
@@ -73,7 +74,7 @@ def create_app() -> FastAPI:
     @application.get("/qdrant/health")
     async def qdrant_health(request: Request) -> dict[str, str]:
         try:
-            await run_in_threadpool(request.app.state.qdrant.healthcheck)
+            await run_in_threadpool(request.app.state.rag.qdrant.healthcheck)
         except QdrantStoreError as error:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return {"message": "qdrant connected"}
@@ -82,8 +83,8 @@ def create_app() -> FastAPI:
     async def index_documents(payload: DocumentsRequest, request: Request) -> DocumentsResponse:
         documents = [document.model_dump() for document in payload.documents]
         try:
-            vectors = await request.app.state.llm.get_embeddings([document["text"] for document in documents])
-            indexed = await run_in_threadpool(request.app.state.qdrant.upsert, documents, vectors)
+            vectors = await request.app.state.rag.llm.get_embeddings([document["text"] for document in documents])
+            indexed = await run_in_threadpool(request.app.state.rag.qdrant.upsert, documents, vectors)
         except (MistralAPIError, QdrantStoreError) as error:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return DocumentsResponse(indexed=indexed)
@@ -94,7 +95,6 @@ def create_app() -> FastAPI:
         request: Request,
         source: str = "service-public-vdd",
     ) -> DeleteDocumentResponse:
-        """Supprime une fiche et tous ses fragments pour une source donnée."""
         admin_key = os.getenv("ADMIN_API_KEY")
         provided_key = request.headers.get("X-Admin-Key", "")
         if not admin_key or not secrets.compare_digest(provided_key, admin_key):
@@ -103,7 +103,7 @@ def create_app() -> FastAPI:
                 detail="Administrative key required.",
             )
         try:
-            await run_in_threadpool(request.app.state.qdrant.delete_document, document_id, source)
+            await run_in_threadpool(request.app.state.rag.qdrant.delete_document, document_id, source)
         except QdrantStoreError as error:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return DeleteDocumentResponse(document_id=document_id, source=source, deleted=True)
@@ -111,45 +111,13 @@ def create_app() -> FastAPI:
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
         try:
-            # La question anonymisée ne transmet pas directement les PII à Mistral.
-            anonymized_question = request.app.state.pii.anonymize(payload.message).text
-            vector = (await request.app.state.llm.get_embeddings([anonymized_question]))[0]
-            candidates = await run_in_threadpool(request.app.state.qdrant.search, vector, 12)
-
-            # Le modèle reçoit plusieurs fragments pour couvrir toute la réponse.
-            context_chunks = rerank_results(payload.message, candidates, top_k=8, deduplicate=False)
-            # Les citations sont choisies parmi les fragments réellement envoyés
-            # au modèle. Ainsi, une fiche utilisée en 5e, 6e ou 7e position
-            # ne peut pas disparaître de la liste des sources affichées.
-            sources = rerank_results(payload.message, context_chunks, top_k=8, deduplicate=True)
-            if not context_chunks:
-                response = "Je ne trouve pas cette information dans les documents disponibles."
-                request.app.state.audit.record_chat(anonymized_question, response, [])
-                return ChatResponse(response=response, sources=[])
-            # Les métadonnées sont incluses dans le contexte pour permettre au
-            # modèle de citer correctement la date et la source juridique.
-            llm_context = [
-                (
-                    f"Titre : {chunk.get('title') or 'Non précisé'}\n"
-                    f"Source : {chunk.get('source') or 'Non précisée'}\n"
-                    f"Date de mise à jour : {chunk.get('modified_at') or 'Non précisée'}\n"
-                    f"URL : {chunk.get('url') or 'Non précisée'}\n"
-                    f"Contenu : {chunk['text']}"
-                )
-                for chunk in context_chunks
-            ]
-            response = await request.app.state.llm.get_response(anonymized_question, llm_context)
-            # Protection supplémentaire si le modèle reproduit une donnée personnelle.
-            response = request.app.state.pii.anonymize(response).text
+            result = await request.app.state.rag.execute(payload.message)
         except (MistralAPIError, QdrantStoreError) as error:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=str(error),
             ) from error
-        # Le texte sert au prompt, mais l'UI reçoit surtout les informations de citation.
-        public_sources = [{key: value for key, value in source.items() if key != "text"} for source in sources]
-        request.app.state.audit.record_chat(anonymized_question, response, public_sources)
-        return ChatResponse(response=response, sources=public_sources)
+        return ChatResponse(response=result.response, sources=result.sources)
 
     return application
 
