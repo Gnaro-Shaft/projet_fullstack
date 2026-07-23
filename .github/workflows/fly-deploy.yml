@@ -9,6 +9,11 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
+    env:
+      # Les tests utilisent un Qdrant local en mémoire et n'ont pas besoin
+      # des secrets de production.
+      QDRANT_URL: ":memory:"
+      QDRANT_COLLECTION: "test_documents"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
