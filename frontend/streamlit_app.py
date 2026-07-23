@@ -151,7 +151,10 @@ def main() -> None:
 
     for i, msg in enumerate(st.session_state.messages):
         with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+            if msg["role"] == "assistant":
+                st.markdown(f'<div class="assistant-box">{msg["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(msg["content"])
             if msg.get("time_ms"):
                 st.caption(f"Répondu en {msg['time_ms']} ms")
             if msg.get("sources"):
