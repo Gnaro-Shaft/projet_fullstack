@@ -46,15 +46,11 @@ def apply_style() -> None:
             display: inline-block; width: 8px; height: 8px;
             border-radius: 50%; margin-right: 6px;
         }
-        .consent-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 1000;
-            display: flex; align-items: center; justify-content: center;
-        }
         .consent-box {
-            background: #fff; max-width: 540px; width: 90%;
+            max-width: 540px; margin: 3rem auto;
+            background: #fff; border: 1px solid #ddd;
             border-radius: 8px; padding: 2rem 2rem 1.5rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .consent-box h2 { margin: 0 0 0.5rem; color: #161616; font-size: 1.3rem; }
         .consent-box p { color: #555; font-size: 0.92rem; line-height: 1.5; margin: 0 0 1.2rem; }
@@ -129,43 +125,28 @@ def display_feedback(msg_index: int) -> None:
 def main() -> None:
     apply_style()
 
-    if st.query_params.get("consent") == "1":
-        st.session_state.consent_given = True
-        st.query_params.clear()
-        st.rerun()
-
-    if st.session_state.get("consent_given") is None:
-        st.session_state.consent_given = False
-
-    if not st.session_state.consent_given:
+    if not st.session_state.get("consent_given"):
         st.markdown(
-            f"""
-            <div class="consent-overlay">
-              <div class="consent-box">
-                <h2>Protection de vos donnees</h2>
-                <p>Cet assistant utilise une IA pour vous aider dans vos demarches
-                administratives. Conformement au RGPD, nous collectons :</p>
-                <ul>
-                  <li>L'empreinte chiffree (hash) de votre question - pas le texte brut</li>
-                  <li>Votre adresse IP (anonymisee, dernier octet masque)</li>
-                  <li>Le navigateur utilise</li>
-                  <li>Le temps de reponse et les sources consulrees</li>
-                </ul>
-                <p>Aucune donnee personnelle n'est stockee en clair.
-                Vous pouvez demander l'effacement de vos traces a tout moment.</p>
-                <div style="text-align:center;margin-top:1.5rem;">
-                  <a href="?consent=1"
-                     style="display:inline-block;background:#000091;color:#fff;
-                            text-decoration:none;padding:0.6rem 2rem;border-radius:4px;
-                            font-size:1rem;font-weight:500;">
-                    Accepter et continuer
-                  </a>
-                </div>
-              </div>
-            </div>
-            """,
+            '<div class="consent-box">'
+            "<h2>Protection de vos donnees</h2>"
+            "<p>Cet assistant utilise une IA pour vous aider dans vos demarches "
+            "administratives. Conformement au RGPD, nous collectons :</p>"
+            "<ul>"
+            "<li>L'empreinte chiffree (hash) de votre question - pas le texte brut</li>"
+            "<li>Votre adresse IP (anonymisee, dernier octet masque)</li>"
+            "<li>Le navigateur utilise</li>"
+            "<li>Le temps de reponse et les sources consulrees</li>"
+            "</ul>"
+            "<p>Aucune donnee personnelle n'est stockee en clair. "
+            "Vous pouvez demander l'effacement de vos traces a tout moment.</p>"
+            "</div>",
             unsafe_allow_html=True,
         )
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Accepter et continuer", type="primary", use_container_width=True):
+                st.session_state.consent_given = True
+                st.rerun()
         return
 
     status = check_backend_status()
