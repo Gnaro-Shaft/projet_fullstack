@@ -37,7 +37,7 @@ class FakeLLM:
         for char in full:
             yield char
 
-    async def get_embeddings(self, texts: list[str]) -> list[list[float]]:
+    def get_embeddings(self, texts: list[str]) -> list[list[float]]:
         return [[0.1] * self.embeddings_dim for _ in texts]
 
 
