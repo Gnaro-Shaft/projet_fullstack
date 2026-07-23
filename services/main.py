@@ -1,5 +1,6 @@
 import os
 import logging
+import secrets
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -94,6 +95,13 @@ def create_app() -> FastAPI:
         source: str = "service-public-vdd",
     ) -> DeleteDocumentResponse:
         """Supprime une fiche et tous ses fragments pour une source donnée."""
+        admin_key = os.getenv("ADMIN_API_KEY")
+        provided_key = request.headers.get("X-Admin-Key", "")
+        if not admin_key or not secrets.compare_digest(provided_key, admin_key):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Administrative key required.",
+            )
         try:
             await run_in_threadpool(request.app.state.qdrant.delete_document, document_id, source)
         except QdrantStoreError as error:

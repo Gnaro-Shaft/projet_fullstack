@@ -63,12 +63,16 @@ def test_index_documents() -> None:
     assert response.json() == {"indexed": 1}
 
 
-def test_delete_document() -> None:
+def test_delete_document(monkeypatch) -> None:
+    monkeypatch.setenv("ADMIN_API_KEY", "test-admin-key")
     fake_qdrant = FakeQdrant()
     with TestClient(app) as client:
         app.state.llm = FakeLLM()
         app.state.qdrant = fake_qdrant
-        response = client.delete("/documents/F123?source=service-public-vdd")
+        response = client.delete(
+            "/documents/F123?source=service-public-vdd",
+            headers={"X-Admin-Key": "test-admin-key"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {
@@ -77,3 +81,11 @@ def test_delete_document() -> None:
         "deleted": True,
     }
     assert fake_qdrant.deleted == [("F123", "service-public-vdd")]
+
+
+def test_delete_document_requires_admin_key(monkeypatch) -> None:
+    monkeypatch.setenv("ADMIN_API_KEY", "test-admin-key")
+    with TestClient(app) as client:
+        response = client.delete("/documents/F123")
+
+    assert response.status_code == 403
