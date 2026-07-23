@@ -20,7 +20,7 @@ def apply_style() -> None:
         """
         <style>
         .stApp { background: #ffffff; }
-        .block-container { max-width: 860px; padding: 3rem 1.5rem 3rem; }
+        .block-container { max-width: 720px; padding: 2rem 1.5rem 3rem; margin: 0 auto; }
         .title {
             border-top: 5px solid #000091; padding-top: 1.5rem; text-align: center;
         }
@@ -141,6 +141,8 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    st.markdown('<div style="max-width:660px;margin:0 auto;">', unsafe_allow_html=True)
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -167,12 +169,10 @@ def main() -> None:
         if msg["role"] == "assistant":
             display_feedback(i)
 
-    if st.session_state.messages:
-        if st.button("Nouvelle conversation", type="secondary", use_container_width=True):
-            st.session_state.messages = []
-            st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
     with st.form("question_form", clear_on_submit=True):
+        st.markdown('<div style="max-width:660px;margin:0 auto;">', unsafe_allow_html=True)
         question = st.text_area(
             "Votre question",
             placeholder="Exemple : quelles sont les conditions pour obtenir un logement social ?",
@@ -180,6 +180,7 @@ def main() -> None:
             label_visibility="collapsed",
         )
         submitted = st.form_submit_button("Envoyer", type="primary", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if submitted and question.strip():
         clean_question = question.strip()
@@ -195,13 +196,15 @@ def main() -> None:
             sources = result.get("sources", [])
             time_ms = result.get("response_time_ms", "")
 
-        st.session_state.messages.append({"role": "user", "content": clean_question})
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer,
-            "sources": sources,
-            "time_ms": time_ms,
-        })
+        st.session_state.messages = [
+            {"role": "user", "content": clean_question},
+            {
+                "role": "assistant",
+                "content": answer,
+                "sources": sources,
+                "time_ms": time_ms,
+            },
+        ]
         st.rerun()
 
 
