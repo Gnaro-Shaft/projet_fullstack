@@ -126,7 +126,19 @@ def create_app() -> FastAPI:
                 response = "Je ne trouve pas cette information dans les documents disponibles."
                 request.app.state.audit.record_chat(anonymized_question, response, [])
                 return ChatResponse(response=response, sources=[])
-            response = await request.app.state.llm.get_response(anonymized_question, [chunk["text"] for chunk in context_chunks])
+            # Les métadonnées sont incluses dans le contexte pour permettre au
+            # modèle de citer correctement la date et la source juridique.
+            llm_context = [
+                (
+                    f"Titre : {chunk.get('title') or 'Non précisé'}\n"
+                    f"Source : {chunk.get('source') or 'Non précisée'}\n"
+                    f"Date de mise à jour : {chunk.get('modified_at') or 'Non précisée'}\n"
+                    f"URL : {chunk.get('url') or 'Non précisée'}\n"
+                    f"Contenu : {chunk['text']}"
+                )
+                for chunk in context_chunks
+            ]
+            response = await request.app.state.llm.get_response(anonymized_question, llm_context)
             # Protection supplémentaire si le modèle reproduit une donnée personnelle.
             response = request.app.state.pii.anonymize(response).text
         except (MistralAPIError, QdrantStoreError) as error:

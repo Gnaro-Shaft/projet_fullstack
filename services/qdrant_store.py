@@ -170,15 +170,21 @@ class QdrantStore:
         results = []
         for hit in hits:
             payload = hit.payload or {}
+            title = payload.get("title")
+            # Compatibilité avec les anciennes notices indexées avant la
+            # correction du connecteur EUR-Lex.
+            if not title or str(title).startswith("$item."):
+                title = f"Acte EUR-Lex {payload.get('document_id', 'inconnu').removeprefix('eurlex-')}"
             results.append(
                 {
                     "text": payload.get("text", ""),
                     "document_id": payload.get("document_id"),
-                    "title": payload.get("title"),
+                    "title": title,
                     "url": payload.get("url"),
                     "modified_at": payload.get("modified_at"),
                     "effective_at": payload.get("effective_at"),
                     "status": payload.get("status"),
+                    "source": payload.get("source"),
                     "metadata": payload.get("metadata", {}),
                     "score": hit.score,
                 }

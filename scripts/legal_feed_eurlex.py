@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 
 DEFAULT_FEED_URL = "http://publications.europa.eu/webapi/notification/ingestion"
 EURLEX_HTML_URL = "https://eur-lex.europa.eu/legal-content/{language}/TXT/HTML/?uri=CELEX:{celex}"
+EURLEX_TEXT_URL = "https://eur-lex.europa.eu/legal-content/{language}/TXT/?uri=CELEX:{celex}"
 CELLAR_XML_URL = "http://publications.europa.eu/resource/celex/{celex}?language={language}"
 
 
@@ -111,15 +112,19 @@ def build_full_text_url(celex: str, language: str = "FR") -> str:
 
 def fetch_document_text(celex: str, language: str = "FR", timeout: int = 30) -> tuple[str, str]:
     """Télécharge le texte intégral, avec repli sur le XML Cellar officiel."""
-    html_url = build_full_text_url(celex, language)
-    request = Request(html_url, headers={"Accept": "text/html", "User-Agent": "TrustRAG/1.0"})
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            text = html_to_text(response.read())
-        if len(text) >= 200:
-            return text, html_url
-    except (HTTPError, URLError):
-        pass
+    html_urls = (
+        build_full_text_url(celex, language),
+        EURLEX_TEXT_URL.format(language=language.upper(), celex=celex),
+    )
+    for html_url in html_urls:
+        request = Request(html_url, headers={"Accept": "text/html", "User-Agent": "TrustRAG/1.0"})
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                text = html_to_text(response.read())
+            if len(text) >= 200:
+                return text, html_url
+        except (HTTPError, URLError):
+            continue
 
     # Le endpoint Cellar fournit le XML légal lorsque la page HTML n'est
     # pas disponible (acte récent, traduction absente, etc.).
@@ -204,6 +209,8 @@ def parse_feed(xml_content: bytes, source: str = "eurlex") -> list[LegalFeedDocu
             re.IGNORECASE,
         )
         celex = celex_match.group(1).upper() if celex_match else None
+        if not title or title.startswith("$item."):
+            title = f"Acte EUR-Lex {celex or index + 1}"
         source_hash = hashlib.sha256(
             "|".join((title, url, published or "", effective_at or "", text)).encode("utf-8")
         ).hexdigest()
@@ -219,7 +226,10 @@ def parse_feed(xml_content: bytes, source: str = "eurlex") -> list[LegalFeedDocu
                 source_hash=source_hash,
             )
         )
-    return documents
+    # Une même œuvre peut apparaître plusieurs fois dans une notification
+    # (par exemple une version corrigée). On ne la télécharge qu'une fois.
+    unique_documents = {document.document_id: document for document in documents}
+    return list(unique_documents.values())
 
 
 def fetch_feed(url: str | None = None, timeout: int = 30, enrich_full_text: bool = True) -> list[LegalFeedDocument]:

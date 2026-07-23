@@ -8,12 +8,36 @@ from dotenv import load_dotenv
 
 from scripts.extract_service_public import split_into_chunks
 from scripts.legal_feed_eurlex import enrich_documents, fetch_feed
-from services.llm import MistralClient
+from services.llm import MistralAPIError, MistralClient
 from services.qdrant_store import QdrantStore
 
 
 load_dotenv()
 SOURCE = "eurlex-rss"
+EMBEDDING_BATCH_SIZE = 8
+
+
+async def embed_with_retry(llm: MistralClient, texts: list[str], attempts: int = 4) -> list[list[float]] | None:
+    """Réessaie les lots après un 429, puis reporte le document."""
+    for attempt in range(attempts):
+        try:
+            vectors: list[list[float]] = []
+            for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+                vectors.extend(
+                    await llm.get_embeddings(texts[start : start + EMBEDDING_BATCH_SIZE])
+                )
+                # Petit espace entre lots pour respecter les limites de débit.
+                if start + EMBEDDING_BATCH_SIZE < len(texts):
+                    await asyncio.sleep(0.5)
+            return vectors
+        except MistralAPIError as error:
+            if "429" not in str(error):
+                raise
+            delay = 2 ** attempt
+            print(f"Limite Mistral atteinte, nouvelle tentative dans {delay}s.")
+            await asyncio.sleep(delay)
+    print("Limite Mistral toujours atteinte : document reporté.")
+    return None
 
 
 async def synchronize(
@@ -48,7 +72,14 @@ async def synchronize(
             payload["text"] = chunk_text
             payload["chunk_index"] = chunk_index
             payloads.append(payload)
-        vectors = await llm.get_embeddings([payload["text"] for payload in payloads])
+        # Mistral impose une limite de tokens par requête. Un acte européen
+        # peut contenir beaucoup de fragments : on envoie donc plusieurs
+        # petits lots au lieu de tout transmettre en une seule fois.
+        texts = [payload["text"] for payload in payloads]
+        vectors = await embed_with_retry(llm, texts)
+        if vectors is None:
+            skipped += 1
+            continue
         qdrant.replace_document(
             document_id=document.document_id,
             documents=payloads,
