@@ -76,6 +76,91 @@ python -m scripts.evaluate_golden_set
 
 Le résultat affiche le `recall@4` et les IDs effectivement retrouvés.
 
+## Synchroniser EUR-Lex
+
+Le connecteur EUR-Lex récupère les notifications récentes, identifie les
+documents par leur numéro CELEX, télécharge le texte intégral disponible, le
+découpe en fragments et crée les embeddings dans Qdrant.
+
+```bash
+# Tester avec une seule notice
+python -m scripts.sync_legal_feed --limit 1
+
+# Synchroniser les notices disponibles
+python -m scripts.sync_legal_feed
+
+# Réindexer des notices déjà présentes (après une correction du connecteur)
+python -m scripts.sync_legal_feed --limit 20 --force-full-text
+```
+
+Les documents déjà à jour sont ignorés grâce à leur hash. Certains actes
+peuvent rester en métadonnées seules si EUR-Lex renvoie `404` pour leur texte
+intégral ; ils restent néanmoins consultables comme sources.
+
+En cas de quota Mistral (`429`), le script attend automatiquement puis reporte
+le document concerné. Il suffit de relancer la synchronisation plus tard.
+
+Pour utiliser uniquement les notices sans télécharger les textes complets :
+
+```bash
+python -m scripts.sync_legal_feed --metadata-only
+```
+
+Le scheduler quotidien peut lancer les deux sources :
+
+```bash
+# Exécuter une synchronisation puis quitter (utile pour un cron)
+python -m scripts.scheduler --once
+
+# Lancer une boucle toutes les 24 heures
+python -m scripts.scheduler --interval 86400
+```
+
+## Déploiement Fly.io
+
+Les deux applications Fly.io utilisent leurs fichiers de configuration dédiés :
+
+```bash
+# Backend FastAPI
+fly deploy --config fly.toml --app projet-fullstack
+
+# Frontend Streamlit
+fly deploy --config fly.frontend.toml --app trustrag-frontend
+```
+
+Les secrets ne doivent pas être commités dans Git. Ils se configurent avec
+`fly secrets set`, par exemple :
+
+```bash
+fly secrets set \
+  MISTRAL_API_KEY="..." \
+  QDRANT_URL="..." \
+  QDRANT_API_KEY="..." \
+  QDRANT_COLLECTION="documents" \
+  ADMIN_API_KEY="..." \
+  --app projet-fullstack
+```
+
+Le frontend doit pointer vers l'URL publique du backend :
+
+```bash
+fly secrets set BACKEND_URL="https://projet-fullstack.fly.dev" \
+  --app trustrag-frontend
+```
+
+Le workflow GitHub Actions `.github/workflows/fly-deploy.yml` exécute les tests
+à chaque push sur `main`, puis déploie automatiquement le backend et le
+frontend. Le workflow `.github/workflows/sync-feeds.yml` lance les
+synchronisations quotidiennes ; ses secrets GitHub doivent contenir les mêmes
+valeurs Mistral et Qdrant que l'environnement de production.
+
+Après un déploiement, vérifier :
+
+```bash
+curl https://projet-fullstack.fly.dev/ping
+curl https://projet-fullstack.fly.dev/qdrant/health
+```
+
 ## Interface Streamlit
 
 Dans un second terminal, démarre l'interface :

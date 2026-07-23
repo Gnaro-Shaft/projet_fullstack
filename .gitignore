@@ -13,3 +13,4 @@ build/
 data/raw/service-public/*.zip
 data/raw/service-public/*.tmp
 data/raw/service-public/manifest.json
+data/audit/chat_audit.jsonl
