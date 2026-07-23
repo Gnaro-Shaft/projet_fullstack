@@ -1,0 +1,46 @@
+name: Synchronize legal feeds
+
+on:
+  schedule:
+    # Tous les jours à 02:17 UTC.
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Update Service-Public and EUR-Lex
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Synchronize Service-Public
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          MISTRAL_URL: ${{ secrets.MISTRAL_URL }}
+          MISTRAL_MODEL: ${{ secrets.MISTRAL_MODEL }}
+          MISTRAL_EMBEDDING_MODEL: ${{ secrets.MISTRAL_EMBEDDING_MODEL }}
+          MISTRAL_MAX_RETRIES: "5"
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_COLLECTION: ${{ secrets.QDRANT_COLLECTION }}
+        run: python -m scripts.sync_service_public
+
+      - name: Synchronize EUR-Lex
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          MISTRAL_URL: ${{ secrets.MISTRAL_URL }}
+          MISTRAL_MODEL: ${{ secrets.MISTRAL_MODEL }}
+          MISTRAL_EMBEDDING_MODEL: ${{ secrets.MISTRAL_EMBEDDING_MODEL }}
+          MISTRAL_MAX_RETRIES: "5"
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_COLLECTION: ${{ secrets.QDRANT_COLLECTION }}
+        run: python -m scripts.sync_legal_feed
