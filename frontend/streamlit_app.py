@@ -129,7 +129,12 @@ def display_feedback(msg_index: int) -> None:
 def main() -> None:
     apply_style()
 
-    if "consent_given" not in st.session_state:
+    if st.query_params.get("consent") == "1":
+        st.session_state.consent_given = True
+        st.query_params.clear()
+        st.rerun()
+
+    if st.session_state.get("consent_given") is None:
         st.session_state.consent_given = False
 
     if not st.session_state.consent_given:
@@ -162,11 +167,6 @@ def main() -> None:
             unsafe_allow_html=True,
         )
         return
-
-    if st.query_params.get("consent") == "1":
-        st.session_state.consent_given = True
-        st.query_params.clear()
-        st.rerun()
 
     status = check_backend_status()
     dot_color = {"connecté": "#00a83e", "indisponible": "#fa5c5c", "hors ligne": "#fa5c5c"}
