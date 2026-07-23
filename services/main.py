@@ -51,6 +51,11 @@ class DeleteDocumentResponse(BaseModel):
     deleted: bool
 
 
+class DeleteConversationResponse(BaseModel):
+    request_id: str
+    deleted: bool
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     llm = MistralClient()
@@ -90,12 +95,7 @@ def create_app() -> FastAPI:
 
     @application.get("/metrics")
     async def metrics(request: Request) -> dict:
-        audit_log = request.app.state.rag.audit.path
-        chat_count = 0
-        try:
-            chat_count = sum(1 for _ in open(audit_log, encoding="utf-8")) if audit_log.exists() else 0
-        except OSError:
-            pass
+        chat_count = request.app.state.rag.audit.chat_count()
 
         collection_info = {}
         try:
@@ -121,6 +121,7 @@ def create_app() -> FastAPI:
                 "health": "/health",
                 "metrics": "/metrics",
                 "qdrant_health": "/qdrant/health",
+                "delete_conversation": "/conversations/{request_id}",
             },
         }
 
@@ -197,6 +198,23 @@ def create_app() -> FastAPI:
         except QdrantStoreError as error:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
         return DeleteDocumentResponse(document_id=document_id, source=source, deleted=True)
+
+    @application.delete("/conversations/{request_id}", response_model=DeleteConversationResponse)
+    async def delete_conversation(request_id: str, request: Request) -> DeleteConversationResponse:
+        admin_key = os.getenv("ADMIN_API_KEY")
+        provided_key = request.headers.get("X-Admin-Key", "")
+        if not admin_key or not secrets.compare_digest(provided_key, admin_key):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Administrative key required.",
+            )
+        deleted = request.app.state.rag.audit.delete_entry(request_id)
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No conversation found with request_id '{request_id}'.",
+            )
+        return DeleteConversationResponse(request_id=request_id, deleted=True)
 
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
