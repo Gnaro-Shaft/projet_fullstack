@@ -41,11 +41,14 @@ def rerank_results(
         # Le titre est important : il contient souvent le sujet exact de la fiche.
         searchable_text = f"{result.get('title', '')} {result.get('text', '')}"
         keyword_score = _keyword_score(question, searchable_text)
+        # Le score de mots-clés uniquement sur le titre pour le filrage "hors-sujet"
+        title_keyword_score = _keyword_score(question, result.get('title', ''))
         result_with_score = dict(result)
         # Le vecteur reste majoritaire, mais les mots précis peuvent corriger
         # un résultat vague qui aurait reçu un score sémantique élevé.
         result_with_score["rerank_score"] = 0.65 * semantic_score + 0.35 * keyword_score
         result_with_score["keyword_score"] = keyword_score
+        result_with_score["title_keyword_score"] = title_keyword_score
         document_key = result.get("document_id") or f"result-{position}"
 
         if not deduplicate:
