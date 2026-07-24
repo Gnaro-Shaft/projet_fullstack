@@ -1,6 +1,6 @@
 import json
 
-from services.audit import AuditLogger
+from app.audit import AuditLogger
 
 
 def test_audit_log_contains_sources_without_raw_question(tmp_path) -> None:

@@ -2,11 +2,11 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Any
 
-from services.audit import AuditLogger
-from services.llm import MistralClient
-from services.pii import PIIAnonymizer
-from services.qdrant_store import QdrantStore
-from services.reranker import rerank_results
+from app.audit import AuditLogger
+from app.llm import MistralClient
+from app.pii import PIIAnonymizer
+from app.qdrant_store import QdrantStore
+from app.reranker import rerank_results
 
 
 @dataclass

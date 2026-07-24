@@ -10,7 +10,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 # renseigner MISTRAL_API_KEY dans .env
-uvicorn services.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 L'API est disponible sur `http://localhost:8000` et sa documentation sur

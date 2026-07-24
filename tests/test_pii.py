@@ -1,4 +1,4 @@
-from services.pii import PIIAnonymizer
+from app.pii import PIIAnonymizer
 
 
 def test_anonymizer_masks_email_and_phone() -> None:

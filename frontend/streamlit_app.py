@@ -214,7 +214,7 @@ def main() -> None:
         else:
             st.markdown(
                 f'<div style="background:#fff;border:1px solid #ddd;'
-                f'border-top:4px solid #e1000f;'
+                f'border-top:4px solid #2a2a2a;'
                 f'padding:0.8rem 1rem;margin:0.8rem 0;border-radius:4px;">'
                 f'{msg["content"]}</div>',
                 unsafe_allow_html=True,

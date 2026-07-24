@@ -32,7 +32,7 @@ st.markdown(
     padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
 }
 .badge-err {
-    display: inline-block; background: #e1000f; color: #fff;
+    display: inline-block; background: #666; color: #fff;
     padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
 }
 .badge-warn {
@@ -274,7 +274,7 @@ def main() -> None:
                 status_df = pd.DataFrame([
                     {"statut": k, "count": v} for k, v in status_counts.items() if v > 0
                 ]).set_index("statut")
-                st.bar_chart(status_df, y="count", height=140, color=["#00a83e", "#e1000f", "#fa5c5c"])
+                st.bar_chart(status_df, y="count", height=140, color=["#00a83e", "#666", "#fa5c5c"])
             else:
                 st.caption("Aucune donnée.")
             st.markdown("</div>", unsafe_allow_html=True)

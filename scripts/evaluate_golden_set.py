@@ -8,9 +8,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from services.llm import MistralClient
-from services.qdrant_store import QdrantStore
-from services.reranker import rerank_results
+from app.llm import MistralClient
+from app.qdrant_store import QdrantStore
+from app.reranker import rerank_results
 
 load_dotenv()
 

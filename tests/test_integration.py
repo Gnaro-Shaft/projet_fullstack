@@ -12,13 +12,13 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from services.audit import AuditLogger
-from services.llm import LlmResponse
-from services.main import app
-from services.pii import PIIAnonymizer
-from services.qdrant_store import QdrantStore
-from services.qdrant_store import QdrantStoreError
-from services.rag.pipeline import RagPipeline
+from app.audit import AuditLogger
+from app.llm import LlmResponse
+from app.main import app
+from app.pii import PIIAnonymizer
+from app.qdrant_store import QdrantStore
+from app.qdrant_store import QdrantStoreError
+from app.rag.pipeline import RagPipeline
 
 
 class FakeLLM:

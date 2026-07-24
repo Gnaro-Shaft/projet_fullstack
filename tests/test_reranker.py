@@ -1,4 +1,4 @@
-from services.reranker import rerank_results
+from app.reranker import rerank_results
 
 
 def test_reranker_combines_semantic_and_keyword_scores() -> None:

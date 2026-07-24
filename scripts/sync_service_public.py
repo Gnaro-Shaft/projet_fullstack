@@ -7,8 +7,8 @@ from dataclasses import asdict
 
 from scripts.download_service_public import download_if_changed
 from scripts.extract_service_public import extract_documents
-from services.llm import MistralClient
-from services.qdrant_store import QdrantStore
+from app.llm import MistralClient
+from app.qdrant_store import QdrantStore
 
 from dotenv import load_dotenv
 

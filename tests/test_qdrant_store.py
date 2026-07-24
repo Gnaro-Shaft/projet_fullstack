@@ -1,4 +1,4 @@
-from services.qdrant_store import QdrantStore
+from app.qdrant_store import QdrantStore
 
 
 def test_replace_document_removes_obsolete_chunks() -> None:

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import httpx
 
-from services.llm import MistralAPIError, MistralClient
+from app.llm import MistralAPIError, MistralClient
 
 
 class FakeResponse:
@@ -45,7 +45,7 @@ def test_mistral_retries_after_rate_limit() -> None:
     ]
     client = MistralClient(api_key="test", max_retries=1)
 
-    with patch("services.llm.httpx.AsyncClient", FakeAsyncClient):
+    with patch("app.llm.httpx.AsyncClient", FakeAsyncClient):
         response = asyncio.run(client.get_response("Bonjour"))
 
     assert response.text == "OK"
@@ -56,7 +56,7 @@ def test_mistral_reports_final_rate_limit() -> None:
     FakeAsyncClient.responses = [FakeResponse(429, {"message": "quota reached"})]
     client = MistralClient(api_key="test", max_retries=0)
 
-    with patch("services.llm.httpx.AsyncClient", FakeAsyncClient):
+    with patch("app.llm.httpx.AsyncClient", FakeAsyncClient):
         try:
             asyncio.run(client.get_response("Bonjour"))
         except MistralAPIError as error:

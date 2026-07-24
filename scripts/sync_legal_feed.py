@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 
 from scripts.extract_service_public import split_into_chunks
 from scripts.legal_feed_eurlex import enrich_documents, fetch_feed
-from services.llm import MistralAPIError, MistralClient
-from services.qdrant_store import QdrantStore
+from app.llm import MistralAPIError, MistralClient
+from app.qdrant_store import QdrantStore
 
 
 load_dotenv()

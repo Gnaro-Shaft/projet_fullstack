@@ -12,12 +12,12 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from services.audit import AuditLogger
-from services.llm import MistralAPIError, MistralClient
-from services.pii import PIIAnonymizer
-from services.qdrant_store import QdrantStore, QdrantStoreError
-from services.rag.pipeline import RagPipeline
-from services.reranker import rerank_results
+from app.audit import AuditLogger
+from app.llm import MistralAPIError, MistralClient
+from app.pii import PIIAnonymizer
+from app.qdrant_store import QdrantStore, QdrantStoreError
+from app.rag.pipeline import RagPipeline
+from app.reranker import rerank_results
 
 load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -394,4 +394,4 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("services.main:app", host="0.0.0.0", port=int(os.getenv("FASTAPI_PORT", "8000")))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.getenv("FASTAPI_PORT", "8000")))

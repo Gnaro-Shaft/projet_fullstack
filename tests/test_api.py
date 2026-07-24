@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 
-from services.audit import AuditLogger
-from services.llm import LlmResponse
-from services.main import app
-from services.rag.pipeline import RagPipeline
+from app.audit import AuditLogger
+from app.llm import LlmResponse
+from app.main import app
+from app.rag.pipeline import RagPipeline
 
 
 class FakeLLM:
@@ -32,7 +32,7 @@ class FakeQdrant:
 
 class FakePII:
     def anonymize(self, text: str):
-        from services.pii import AnonymizationResult
+        from app.pii import AnonymizationResult
         return AnonymizationResult(text=text, detected_types=[])
 
 
