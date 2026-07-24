@@ -130,5 +130,21 @@
       "min_faithfulness": 3.5,
       "min_hallucination": 3.5
     }
+  },
+  {
+    "type": "retrieval",
+    "timestamp": "2026-07-24T10:45:19.431617+00:00",
+    "commit": "d44fe26",
+    "summary": {
+      "hit_at_1": 1.0,
+      "hit_at_3": 1.0,
+      "hit_at_5": 1.0,
+      "mrr": 1.0,
+      "k": 5,
+      "total": 10
+    },
+    "params": {
+      "top_k": 5
+    }
   }
 ]
