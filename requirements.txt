@@ -17,13 +17,13 @@ lxml
 pydantic
 
 # Configuration
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 
 # AI Governance
 spacy
 
 # Testing
-pytest==8.4.2
+pytest==9.0.3
 pytest-timeout>=2.3.1
 pytest-cov>=4.1.0
 
