@@ -354,7 +354,11 @@ def create_app() -> FastAPI:
                     full += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
                 safe = request.app.state.rag.pii.anonymize(full).text
-                public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
+                _NO_SOURCE_PATTERNS = ["ne peux pas répondre", "ne trouve pas", "ne concerne pas"]
+                if any(p in safe.lower() for p in _NO_SOURCE_PATTERNS):
+                    public_sources = []
+                else:
+                    public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
                 elapsed = time.monotonic() - start
                 usage = getattr(request.app.state.rag.llm, "_last_usage", {})
                 request.app.state.rag.audit.record_chat(

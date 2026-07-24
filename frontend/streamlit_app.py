@@ -215,7 +215,7 @@ def main() -> None:
             )
         if msg.get("time_ms"):
             st.caption(f"Répondu en {msg['time_ms']} ms")
-        if msg.get("sources") and "ne trouve pas" not in msg.get("content", ""):
+        if msg.get("sources"):
             display_sources(msg["sources"])
         if msg["role"] == "assistant":
             display_feedback(i)

@@ -52,7 +52,11 @@ class RagPipeline:
         llm_result = await self.llm.get_response(anonymized, llm_context)
         safe_response = self.pii.anonymize(llm_result.text).text
 
-        public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
+        _NO_SOURCE_PATTERNS = ["ne peux pas répondre", "ne trouve pas", "ne concerne pas"]
+        if any(p in safe_response.lower() for p in _NO_SOURCE_PATTERNS):
+            public_sources = []
+        else:
+            public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
         return RagResult(
             response=safe_response, sources=public_sources,
             anonymized_question=anonymized,
