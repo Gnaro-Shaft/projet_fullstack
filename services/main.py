@@ -283,6 +283,13 @@ def create_app() -> FastAPI:
             )
         return DeleteConversationResponse(request_id=request_id, deleted=True)
 
+    @application.get("/eval/history")
+    async def eval_history(request: Request) -> list[dict]:
+        path = Path("data/eval_history.json")
+        if not path.exists():
+            return []
+        return json.loads(path.read_text(encoding="utf-8"))
+
     @application.post("/feedback")
     async def feedback(payload: FeedbackRequest, request: Request) -> dict:
         success = request.app.state.rag.audit.record_feedback(payload.request_id, payload.score)

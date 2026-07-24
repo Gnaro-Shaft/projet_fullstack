@@ -13,6 +13,8 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -293,6 +295,28 @@ async def main() -> None:
         failures.append(f"Hallucination {s['avg_hallucination_absence']}/5 < {args.min_hallucination}/5")
     if s["errors"] > 0:
         failures.append(f"{s['errors']} erreur(s) lors de l'évaluation")
+
+    history_path = Path("data/eval_history.json")
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    history = json.loads(history_path.read_text(encoding="utf-8")) if history_path.exists() else []
+    commit = "unknown"
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        pass
+    history_entry = {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "commit": commit,
+        "summary": s,
+        "params": {
+            "threshold": args.threshold,
+            "min_faithfulness": args.min_faithfulness,
+            "min_hallucination": args.min_hallucination,
+        },
+    }
+    history.append(history_entry)
+    history_path.write_text(json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Historique sauvegardé : {history_path} ({len(history)} runs)")
 
     if failures:
         print(f"\n❌ QUALITY GATE FAILED: {'; '.join(failures)}")

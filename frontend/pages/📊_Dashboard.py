@@ -166,6 +166,40 @@ def main() -> None:
                 )
         st.markdown("</div>", unsafe_allow_html=True)
 
+    eval_history = fetch_list("/eval/history")
+    if eval_history:
+        st.markdown(
+            '<div class="card"><h3>\U0001f4ca Évolution qualité RAG</h3>'
+            f'<span class="sub">{len(eval_history)} runs d\'évaluation</span>',
+            unsafe_allow_html=True,
+        )
+        ev_df = pd.DataFrame([
+            {
+                "run": i + 1,
+                "run_label": f"#{i+1}" + (f" ({e['commit'][:7]})" if e.get("commit", "unknown") != "unknown" else ""),
+                "timestamp": e.get("timestamp", "")[:19],
+                "global": e["summary"]["overall_quality"],
+                "fidélité": e["summary"]["avg_faithfulness"] / 5,
+                "complétude": e["summary"]["avg_completeness"] / 5,
+                "anti-hallucination": e["summary"]["avg_hallucination_absence"] / 5,
+                "sources": e["summary"]["avg_source_usage"] / 5,
+            }
+            for i, e in enumerate(eval_history)
+        ])
+        chart_cols = ["global", "fidélité", "complétude", "anti-hallucination", "sources"]
+        st.line_chart(ev_df.set_index("run")[chart_cols], height=180)
+        latest = eval_history[-1]["summary"]
+        st.markdown(
+            f'<span class="sub">Dernier run : {ev_df.iloc[-1]["timestamp"]} &nbsp;|&nbsp; '
+            f"Global: {latest['overall_quality']:.0%} &nbsp;|&nbsp; "
+            f"Fidélité: {latest['avg_faithfulness']}/5 &nbsp;|&nbsp; "
+            f"Complétude: {latest['avg_completeness']}/5 &nbsp;|&nbsp; "
+            f"Hallucination: {latest['avg_hallucination_absence']}/5 &nbsp;|&nbsp; "
+            f"Sources: {latest['avg_source_usage']}/5</span>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
     if audit_entries:
         times = []
         rt_values = []
