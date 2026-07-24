@@ -20,3 +20,12 @@ primary_region = 'cdg'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
+
+[mounts]
+  source = 'data'
+  destination = '/data'
+
+[env]
+  AUDIT_LOG_PATH = '/data/audit/chat_audit.jsonl'
+  EVAL_HISTORY_PATH = '/data/eval_history.json'
+

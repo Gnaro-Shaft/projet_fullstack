@@ -280,7 +280,7 @@ def create_app() -> FastAPI:
 
     @application.get("/eval/history")
     async def eval_history(request: Request) -> list[dict]:
-        path = Path("data/eval_history.json")
+        path = Path(os.getenv("EVAL_HISTORY_PATH", "data/eval_history.json"))
         if not path.exists():
             return []
         return json.loads(path.read_text(encoding="utf-8"))

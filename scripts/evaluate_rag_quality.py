@@ -296,7 +296,7 @@ async def main() -> None:
     if s["errors"] > 0:
         failures.append(f"{s['errors']} erreur(s) lors de l'évaluation")
 
-    history_path = Path("data/eval_history.json")
+    history_path = Path(os.getenv("EVAL_HISTORY_PATH", "data/eval_history.json"))
     history_path.parent.mkdir(parents=True, exist_ok=True)
     history = json.loads(history_path.read_text(encoding="utf-8")) if history_path.exists() else []
     commit = "unknown"
