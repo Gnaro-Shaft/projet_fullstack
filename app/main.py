@@ -345,7 +345,7 @@ def create_app() -> FastAPI:
                 not context_chunks
                 or top is None
                 or top.get("rerank_score", 0) < 0.4
-                or top.get("keyword_score", 0) < 0.1
+                or top.get("keyword_score", 0) < 0.25
             ):
                 no_result = "Je ne trouve pas cette information dans les documents disponibles."
                 async def noop():
