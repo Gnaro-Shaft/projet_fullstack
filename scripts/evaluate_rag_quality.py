@@ -69,13 +69,21 @@ def load_golden_set(path: Path = GOLDEN_SET_PATH) -> list[dict[str, Any]]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-async def fetch_chat_response(question: str) -> dict[str, Any]:
+async def fetch_chat_response(question: str, retries: int = 2) -> dict[str, Any]:
     import httpx
 
-    async with httpx.AsyncClient(timeout=90.0) as client:
-        response = await client.post(f"{BACKEND_URL}/chat", json={"message": question})
-        response.raise_for_status()
-        return response.json()
+    last_error = None
+    for attempt in range(retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=90.0) as client:
+                response = await client.post(f"{BACKEND_URL}/chat", json={"message": question})
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                await asyncio.sleep(2 ** attempt)
+    raise last_error  # type:ignore[misc]
 
 
 async def judge_response(llm: MistralClient, question: str, response: str, context: list[str]) -> dict[str, Any]:

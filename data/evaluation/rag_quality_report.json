@@ -1,84 +1,76 @@
 {
   "summary": {
     "total_questions": 10,
-    "retrieval_success_rate": 1.0,
-    "avg_faithfulness": 5.0,
-    "avg_completeness": 4.6,
-    "avg_hallucination_absence": 5.0,
-    "avg_source_usage": 3.6,
-    "overall_quality": 0.91,
+    "retrieval_success_rate": 0.9,
+    "avg_faithfulness": 4.5,
+    "avg_completeness": 4.5,
+    "avg_hallucination_absence": 4.5,
+    "avg_source_usage": 3.9,
+    "overall_quality": 0.87,
     "errors": 0
   },
   "results": [
     {
       "question": "Comment être bien assuré pendant des vacances à l'étranger ?",
       "expected_document_id": "F2169",
-      "response_preview": "Pour être bien assuré pendant des vacances à l'étranger, voici les points clés à vérifier :\n\n### **Avant le voyage**\n- **Vérifiez vos garanties existantes** : Certains contrats (assurance habitation, ",
+      "response_preview": "Pour être bien assuré pendant des vacances à l'étranger, vous pouvez souscrire un contrat d'assurance et/ou d'assistance pour couvrir les imprévus comme un accident ou un vol de bagages.\n\n**Avant le v",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
         "F2169",
-        "F2485",
-        "F32833",
-        "F32556",
-        "F2694"
+        "F213"
       ],
       "expected_id": "F2169",
       "key_facts_coverage": 0.0,
       "faithfulness": 5,
       "completeness": 5,
       "hallucination_absence": 5,
-      "source_usage": 5,
-      "judge_explanation": "La réponse de l'assistant reprend intégralement les informations des documents sources sans ajout, omission ou modification. Toutes les sections ('Avant le voyage', 'Pendant le voyage', 'À vérifier absolument') et les détails (garantie annulation voyage, responsabilité civile villégiature, carte européenne d'assurance maladie, etc.) sont fidèlement extraits des documents 1, 2, 3 et 4. La source est correctement citée avec son titre et son URL exacts.",
-      "overall": 1.0
+      "source_usage": 3,
+      "judge_explanation": "<br>La réponse est entièrement fidèle au contexte et couvre tous les aspects importants de la question. Aucune information inventée n'est présente. Les sources sont mentionnées mais de façon incomplète (le lien 'Remboursement des soins à l'étranger (vacances ou court séjour)' n'existe pas dans le contexte fourni).",
+      "overall": 0.9
     },
     {
       "question": "Quelles aides financières existent quand un enfant entre à l'école ?",
       "expected_document_id": "F38244",
-      "response_preview": "Voici les aides financières possibles à l'entrée à l'école (primaire) :\n\n- **Allocation de rentrée scolaire (ARS)** : sous conditions de ressources, dès 6 ans.\n- **Aides pour la cantine** : sous condi",
+      "response_preview": "À l'école primaire, vous pouvez bénéficier, sous conditions de ressources, de l'**allocation de rentrée scolaire (ARS)** dès les 6 ans de votre enfant. S'il fréquente la cantine, vous pouvez éventuell",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
-        "F38244",
-        "F1885",
-        "F19294",
-        "F1883"
+        "F38244"
       ],
       "expected_id": "F38244",
       "key_facts_coverage": 0.0,
       "faithfulness": 5,
-      "completeness": 3,
+      "completeness": 4,
       "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "La réponse est fidèle et sans hallucination, mais elle omet des détails importants comme la 'bourse pour l'école élémentaire' (mentionnée dans les documents 1, 5 et 8) et ne cite pas correctement les sources. Les aides pour le collège, le lycée et les fonds sociaux ne sont pas incluses, alors qu'elles sont pertinentes pour la question posée.",
-      "overall": 0.8
+      "source_usage": 5,
+      "judge_explanation": "La réponse est entièrement fidèle au contexte et couvre les aides principales pour l'école primaire. Elle omet cependant les aides spécifiques au collège, lycée général et lycée professionnel mentionnées dans le contexte.",
+      "overall": 0.95
     },
     {
       "question": "Que se passe-t-il après la recevabilité d'un dossier de surendettement ?",
       "expected_document_id": "F34642",
-      "response_preview": "Après la recevabilité d'un dossier de surendettement, la commission de surendettement établit l'état détaillé des dettes du surendetté. Elle détermine ensuite l'orientation du dossier pour proposer le",
+      "response_preview": "Après la recevabilité d'un dossier de surendettement, la commission de surendettement cherche à mieux connaître la situation du surendetté pour établir son état d'endettement définitif (ou état du pas",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
         "F34642",
         "F1946",
-        "F134",
-        "F10434",
-        "F22131"
+        "F134"
       ],
       "expected_id": "F34642",
       "key_facts_coverage": 0.3333333333333333,
       "faithfulness": 5,
-      "completeness": 5,
+      "completeness": 3,
       "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "<br>La réponse couvre tous les aspects demandés par la question et reprend fidèlement les informations des documents sources. Cependant, les sources ne sont pas citées avec leurs titres et URLs exacts, mais de manière générique (ex: 'documents sources').",
+      "source_usage": 5,
+      "judge_explanation": "La réponse est fidèle et sans hallucination, couvrant l'essentiel de la procédure après recevabilité. Cependant, elle omet des détails importants comme :<br>- La notification aux créanciers et à la Caf/MSA par courrier recommandé avec accusé de réception (Document 2).<br>- La possibilité pour les créanciers de contester le montant de leur créance sous 30 jours (Document 4).<br>- Les obligations du surendetté (paiement du loyer, factures, pensions alimentaires, etc.) et la suspension automatique des saisies (sauf exceptions) (Documents 3 et 6).<br>- L'inscription au FICP et les effets immédiats du dépôt (Document 5).<br>- La proposition de rendez-vous par la banque sous 6 semaines (Document 8).",
       "overall": 0.9
     },
     {
       "question": "Comment fonctionne le congé de paternité si l'enfant est hospitalisé ?",
       "expected_document_id": "F35002",
-      "response_preview": "Si l'enfant est hospitalisé immédiatement après sa naissance dans une unité de soins spécialisée, le père salarié peut bénéficier d'un congé spécifique supplémentaire.\n\n**Conditions :**\n- Le congé doi",
+      "response_preview": "Le congé de paternité et d'accueil de l'enfant est ouvert sans condition d'ancienneté et quel que soit le type de contrat de travail (CDI, CDD ou contrat temporaire).\n\n**Demande auprès de l'employeur*",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
@@ -88,39 +80,34 @@
       "expected_id": "F35002",
       "key_facts_coverage": 0.3333333333333333,
       "faithfulness": 5,
-      "completeness": 4,
+      "completeness": 5,
       "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "La réponse est fidèle et sans hallucination, mais elle ne mentionne pas explicitement que le congé supplémentaire s'ajoute à la durée du congé de paternité et d'accueil de l'enfant, ni que cela concerne aussi la personne vivant en couple avec la mère (hors fonction publique). Les sources sont citées de manière vague (service-public-vdd) sans titres ni URLs.",
-      "overall": 0.85
+      "source_usage": 5,
+      "judge_explanation": "La réponse couvre tous les aspects de la question (demande auprès de l'employeur, début du congé, durée, indemnisation, demande auprès de la CPAM et unités de soins spécialisés) en utilisant exactement les termes et informations des documents sources. Aucune information inventée n'est présente. Les sources sont correctement citées avec titres et URLs.",
+      "overall": 1.0
     },
     {
       "question": "Quel est le montant maximal d'un paiement en espèces ?",
       "expected_document_id": "F10999",
-      "response_preview": "Le montant maximal d'un paiement en espèces dépend du contexte :\n\n- **Au guichet des centres des finances publiques** : limité à 300 €.\n- **Entre un particulier et un professionnel** : limité à 1 000 ",
+      "response_preview": "Le montant maximal d'un paiement en espèces dépend du contexte :\n\n- **Entre particuliers** (sans besoin professionnel) : pas de limite.\n- **Entre particuliers** (pour un montant supérieur à 1 500 €) :",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
-        "F10999",
-        "F2421",
-        "F2424",
-        "F794",
-        "F801",
-        "F10410"
+        "F10999"
       ],
       "expected_id": "F10999",
       "key_facts_coverage": 0.5,
       "faithfulness": 5,
       "completeness": 5,
       "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "La réponse est entièrement fidèle au contexte et couvre tous les aspects importants de la question. Cependant, la source citée est incomplète (seul le titre est mentionné sans date ni URL complète).",
-      "overall": 0.9
+      "source_usage": 5,
+      "judge_explanation": "La réponse est fidèle au contexte, couvre tous les aspects de la question (paiements entre particuliers, à un professionnel, au guichet des centres des finances publiques), ne contient aucune information inventée et cite correctement les sources avec leurs titres et URLs.",
+      "overall": 1.0
     },
     {
       "question": "Quelles sont les règles de la pause déjeuner du salarié ?",
       "expected_document_id": "F34555",
-      "response_preview": "Voici les règles concernant la pause déjeuner du salarié en France :\n\n### **Obligation de pause**\n- L'employeur n'est pas obligé d'accorder une pause déjeuner spécifique, mais le salarié doit bénéfici",
+      "response_preview": "La pause déjeuner du salarié n'est pas obligatoire pour l'employeur, mais un temps de pause doit être accordé dès que le salarié a effectué un certain nombre d'heures de travail.\n\n**Durée de la pause ",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
@@ -133,78 +120,70 @@
       "completeness": 5,
       "hallucination_absence": 5,
       "source_usage": 3,
-      "judge_explanation": "La réponse de l'assistant reprend fidèlement tous les éléments du contexte, y compris les durées, les conditions et les exceptions. Cependant, les sources ne sont pas citées avec leurs titres exacts et URLs complètes, mais uniquement mentionnées de manière vague ('source officielle').",
+      "judge_explanation": "<br>La réponse est fidèle et complète au contexte, couvrant tous les aspects demandés (obligation, durée, lieu, rémunération, local de restauration).<br>Les sources sont mentionnées mais de façon générique sans préciser les titres ou URLs exacts pour chaque partie.",
       "overall": 0.9
     },
     {
       "question": "Comment est fixé le logement de l'enfant après une séparation ?",
       "expected_document_id": "F18785",
-      "response_preview": "La résidence de l'enfant, c'est-à-dire son logement après une séparation, est fixée soit par accord entre les parents, soit par décision du juge aux affaires familiales (Jaf) en cas de désaccord.\n\n**E",
+      "response_preview": "Je ne trouve pas cette information dans les documents disponibles.",
       "error": null,
-      "retrieval_success": true,
-      "retrieved_ids": [
-        "F18785",
-        "F1329",
-        "F3133"
-      ],
+      "retrieval_success": false,
+      "retrieved_ids": [],
       "expected_id": "F18785",
-      "key_facts_coverage": 0.6666666666666666,
+      "key_facts_coverage": 0.0,
       "faithfulness": 5,
       "completeness": 5,
       "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "La réponse est fidèle et complète par rapport au contexte, couvrant tous les aspects importants (accord entre parents, décision du JAF, critères de décision, conventions parentales). Cependant, les sources sont mentionnées de manière vague ('sources officielles' sans titres exacts ni URLs complètes).",
-      "overall": 0.9
+      "source_usage": 0,
+      "judge_explanation": "<br>La réponse indique explicitement ne pas trouver l'information dans les documents fournis, ce qui est exact. Aucune information inventée ou non présente dans le contexte n'est ajoutée. Aucune source n'est citée, car la réponse ne s'appuie pas sur le contexte.",
+      "overall": 0.75
     },
     {
       "question": "Quelles sont les conditions pour obtenir un logement social ?",
       "expected_document_id": "F869",
-      "response_preview": "Pour obtenir un logement social, il faut :\n\n1. **Faire une demande** (en ligne ou avec un formulaire papier).\n2. **Ne pas dépasser un revenu maximum** (le montant dépend du nombre de personnes à loger",
+      "response_preview": "Pour obtenir un logement social, il faut en faire la demande et ne pas dépasser un revenu maximum. Ce montant maximum dépend notamment du nombre de personnes à loger et de la localisation du logement ",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
-        "F869",
-        "F282",
-        "F10007",
-        "F18005"
+        "F869"
       ],
       "expected_id": "F869",
-      "key_facts_coverage": 0.6666666666666666,
-      "faithfulness": 5,
-      "completeness": 4,
-      "hallucination_absence": 5,
-      "source_usage": 3,
-      "judge_explanation": "La réponse est fidèle au contexte et couvre les conditions principales (demande, revenus, pièces justificatives). Cependant, elle omet les détails sur les critères de priorité (situation personnelle comme handicap, mal-logement, etc.) et le simulateur n'est pas correctement cité (le lien pointe vers F10007 au lieu de F869).",
-      "overall": 0.85
+      "key_facts_coverage": 0.3333333333333333,
+      "faithfulness": 0,
+      "completeness": 3,
+      "hallucination_absence": 0,
+      "source_usage": 5,
+      "judge_explanation": "<br>La réponse invente des montants de revenus annuels maximum (ex. '38 747 €' pour 1 personne) et des détails sur les exceptions (baisse de revenus de 10 %) qui ne sont pas présents dans le contexte. Elle mentionne aussi une demande en ligne spécifique ('Demande de logement social en ligne') non référencée dans les documents sources. Les sources sont correctement citées avec titres et URLs.",
+      "overall": 0.4
     },
     {
       "question": "Quelles aides existent pour un étudiant en situation de handicap ?",
       "expected_document_id": "F2326",
-      "response_preview": "Voici les aides mentionnées dans le contexte pour un étudiant en situation de handicap :\n\n**Aides financières :**\n- **Allocation d'éducation de l'enfant handicapé (AEEH)** : pour les moins de 20 ans à",
+      "response_preview": "Voici les aides disponibles pour un étudiant en situation de handicap :\n\n**Aides financières :**\n- **Allocation d'éducation de l'enfant handicapé (AEEH)** : si vous avez moins de 20 ans et êtes à la c",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
         "F2326",
-        "F31029"
+        "F1885"
       ],
       "expected_id": "F2326",
       "key_facts_coverage": 0.0,
       "faithfulness": 5,
       "completeness": 5,
       "hallucination_absence": 5,
-      "source_usage": 5,
-      "judge_explanation": "La réponse couvre tous les aspects mentionnés dans les documents sources sans ajout ni omission. Toutes les informations sont fidèlement retranscrites, et les sources sont correctement citées avec titres et URLs.",
-      "overall": 1.0
+      "source_usage": 3,
+      "judge_explanation": "<br>La réponse couvre exhaustivement les aides mentionnées dans les documents sources (aides financières, transports, logement, restauration, accompagnement, santé, RQTH).<br>Les informations sont fidèlement retranscrites sans ajout ni omission.<br>Les sources sont citées, mais de manière générique (tous les liens pointent vers la même page 'F2326') sans distinction des documents spécifiques utilisés pour chaque section.",
+      "overall": 0.9
     },
     {
       "question": "Comment justifier son niveau en français pour obtenir la nationalité ?",
       "expected_document_id": "F11926",
-      "response_preview": "Pour obtenir la nationalité française, vous devez justifier d’une connaissance de la langue française au moins égale au niveau **B2** du CECRL (oral et écrit).\n\nLes documents acceptés sont :\n- Un dipl",
+      "response_preview": "Pour obtenir la nationalité française, vous devez justifier d'une connaissance de la langue française à l'oral et à l'écrit au moins égale au niveau B2 du cadre européen commun de référence pour les l",
       "error": null,
       "retrieval_success": true,
       "retrieved_ids": [
-        "F11926",
-        "F34501"
+        "F11926"
       ],
       "expected_id": "F11926",
       "key_facts_coverage": 0.0,
@@ -212,7 +191,7 @@
       "completeness": 5,
       "hallucination_absence": 5,
       "source_usage": 5,
-      "judge_explanation": "La réponse est entièrement fidèle au contexte, couvre tous les aspects de la question, ne contient aucune invention et cite correctement les sources avec leurs titres et URLs.",
+      "judge_explanation": "La réponse est entièrement fidèle au contexte, couvre tous les aspects de la question (niveau B2, documents acceptés, cas de dispense) et ne contient aucune information inventée. Les sources sont correctement citées avec titres et URLs.",
       "overall": 1.0
     }
   ]

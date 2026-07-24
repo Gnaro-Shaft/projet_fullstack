@@ -14,5 +14,121 @@
     "params": {
       "top_k": 5
     }
+  },
+  {
+    "type": "retrieval",
+    "timestamp": "2026-07-24T10:24:27.835345+00:00",
+    "commit": "0173176",
+    "summary": {
+      "hit_at_1": 1.0,
+      "hit_at_3": 1.0,
+      "hit_at_5": 1.0,
+      "mrr": 1.0,
+      "k": 5,
+      "total": 10
+    },
+    "params": {
+      "top_k": 5
+    }
+  },
+  {
+    "type": "rag_quality",
+    "timestamp": "2026-07-24T10:34:14.650052+00:00",
+    "commit": "0173176",
+    "summary": {
+      "total_questions": 10,
+      "retrieval_success_rate": 0.0,
+      "avg_faithfulness": 0.0,
+      "avg_completeness": 0.0,
+      "avg_hallucination_absence": 0.0,
+      "avg_source_usage": 0.0,
+      "overall_quality": 0.0,
+      "errors": 10
+    },
+    "params": {
+      "threshold": 0.7,
+      "min_faithfulness": 3.5,
+      "min_hallucination": 3.5
+    }
+  },
+  {
+    "type": "rag_quality",
+    "timestamp": "2026-07-24T10:34:47.138426+00:00",
+    "commit": "0173176",
+    "summary": {
+      "total_questions": 10,
+      "retrieval_success_rate": 0.0,
+      "avg_faithfulness": 0.0,
+      "avg_completeness": 0.0,
+      "avg_hallucination_absence": 0.0,
+      "avg_source_usage": 0.0,
+      "overall_quality": 0.0,
+      "errors": 10
+    },
+    "params": {
+      "threshold": 0.0,
+      "min_faithfulness": 0.0,
+      "min_hallucination": 0.0
+    }
+  },
+  {
+    "type": "rag_quality",
+    "timestamp": "2026-07-24T10:36:04.029481+00:00",
+    "commit": "0173176",
+    "summary": {
+      "total_questions": 10,
+      "retrieval_success_rate": 0.9,
+      "avg_faithfulness": 4.3,
+      "avg_completeness": 4.0,
+      "avg_hallucination_absence": 4.5,
+      "avg_source_usage": 3.9,
+      "overall_quality": 0.835,
+      "errors": 0
+    },
+    "params": {
+      "threshold": 0.0,
+      "min_faithfulness": 0.0,
+      "min_hallucination": 0.0
+    }
+  },
+  {
+    "type": "rag_quality",
+    "timestamp": "2026-07-24T10:36:48.075699+00:00",
+    "commit": "0173176",
+    "summary": {
+      "total_questions": 10,
+      "retrieval_success_rate": 0.9,
+      "avg_faithfulness": 4.1,
+      "avg_completeness": 3.9,
+      "avg_hallucination_absence": 4.0,
+      "avg_source_usage": 4.3,
+      "overall_quality": 0.815,
+      "errors": 0
+    },
+    "params": {
+      "threshold": 0.7,
+      "min_faithfulness": 3.5,
+      "min_hallucination": 3.5
+    }
+  },
+  {
+    "type": "rag_quality",
+    "timestamp": "2026-07-24T10:37:40.799296+00:00",
+    "commit": "0173176",
+    "summary": {
+      "total_questions": 10,
+      "retrieval_success_rate": 0.9,
+      "avg_faithfulness": 4.5,
+      "avg_completeness": 4.5,
+      "avg_hallucination_absence": 4.5,
+      "avg_source_usage": 3.9,
+      "overall_quality": 0.87,
+      "errors": 0
+    },
+    "params": {
+      "threshold": 0.7,
+      "min_faithfulness": 3.5,
+      "min_hallucination": 3.5
+    }
   }
 ]
