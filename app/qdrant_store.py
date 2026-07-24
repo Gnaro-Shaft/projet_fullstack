@@ -180,7 +180,7 @@ class QdrantStore:
                     "text": payload.get("text", ""),
                     "document_id": payload.get("document_id"),
                     "title": title,
-                    "url": payload.get("url"),
+                    "url": (payload.get("url") or "").replace("service-public.gouv.fr", "service-public.fr"),
                     "modified_at": payload.get("modified_at"),
                     "effective_at": payload.get("effective_at"),
                     "status": payload.get("status"),

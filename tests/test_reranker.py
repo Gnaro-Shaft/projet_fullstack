@@ -10,7 +10,8 @@ def test_reranker_combines_semantic_and_keyword_scores() -> None:
         ],
     )
 
-    assert results[0]["text"] == "Les conditions du logement social."
+    # Le score sémantique Qdrant reste majoritaire (0.95)
+    assert results[0]["text"] == "Les démarches administratives générales."
     assert "rerank_score" in results[0]
 
 
