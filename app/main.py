@@ -1,10 +1,11 @@
-import os
 import json
 import logging
+import os
 import secrets
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, status
@@ -191,14 +192,12 @@ def create_app() -> FastAPI:
     @application.get("/health")
     async def health(request: Request) -> dict:
         checks = {}
-        all_ok = True
 
         try:
             await run_in_threadpool(request.app.state.rag.qdrant.healthcheck)
             checks["qdrant"] = "ok"
         except QdrantStoreError as e:
             checks["qdrant"] = str(e)
-            all_ok = False
 
         try:
             vectors = await request.app.state.rag.llm.get_embeddings(["test"])
@@ -206,20 +205,16 @@ def create_app() -> FastAPI:
                 checks["embeddings"] = "ok"
             else:
                 checks["embeddings"] = "empty response"
-                all_ok = False
         except MistralAPIError as e:
             checks["embeddings"] = str(e)
-            all_ok = False
 
         try:
             llm_resp = await request.app.state.rag.llm.get_response("Réponds 'ok'")
             checks["llm"] = "ok" if "ok" in llm_resp.text.lower() else "unexpected"
         except MistralAPIError as e:
             checks["llm"] = str(e)
-            all_ok = False
 
-        status_code = status.HTTP_200_OK if all_ok else status.HTTP_503_SERVICE_UNAVAILABLE
-        raise HTTPException(status_code=status_code, detail=json.dumps(checks))
+        return checks
 
     @application.get("/qdrant/health")
     async def qdrant_health(request: Request) -> dict[str, str]:

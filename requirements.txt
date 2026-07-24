@@ -25,3 +25,7 @@ spacy
 # Testing
 pytest==8.4.2
 pytest-timeout>=2.3.1
+pytest-cov>=4.1.0
+
+# Linting & Security
+ruff>=0.4.0

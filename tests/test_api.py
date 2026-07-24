@@ -1,6 +1,5 @@
 from fastapi.testclient import TestClient
 
-from app.audit import AuditLogger
 from app.llm import LlmResponse
 from app.main import app
 from app.rag.pipeline import RagPipeline

@@ -6,10 +6,9 @@ import os
 import re
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from xml.etree import ElementTree
-
 
 DEFAULT_FEED_URL = "http://publications.europa.eu/webapi/notification/ingestion"
 EURLEX_HTML_URL = "https://eur-lex.europa.eu/legal-content/{language}/TXT/HTML/?uri=CELEX:{celex}"

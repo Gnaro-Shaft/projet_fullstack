@@ -5,7 +5,6 @@ Il utilise un FakeLLM pour éviter la dépendance à l'API Mistral en CI.
 """
 
 import asyncio
-import json
 import os
 import time
 
@@ -16,8 +15,7 @@ from app.audit import AuditLogger
 from app.llm import LlmResponse
 from app.main import app
 from app.pii import PIIAnonymizer
-from app.qdrant_store import QdrantStore
-from app.qdrant_store import QdrantStoreError
+from app.qdrant_store import QdrantStore, QdrantStoreError
 from app.rag.pipeline import RagPipeline
 
 
@@ -124,8 +122,7 @@ def test_healthcheck_returns_200_with_fake_llm() -> None:
         )
         response = client.get("/health")
     assert response.status_code == 200
-    detail = json.loads(response.json()["detail"])
-    assert detail["llm"] == "unexpected"
+    assert response.json()["llm"] == "unexpected"
 
 
 @pytest.mark.integration

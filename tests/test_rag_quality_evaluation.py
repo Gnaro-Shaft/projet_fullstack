@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 
 from scripts.evaluate_rag_quality import compute_summary, evaluation_from_sources, load_golden_set
 

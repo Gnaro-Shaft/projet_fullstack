@@ -1,5 +1,5 @@
 import os
-from datetime import UTC, datetime
+from datetime import datetime
 
 import httpx
 import pandas as pd
@@ -306,7 +306,7 @@ def main() -> None:
                         ts = datetime.fromisoformat(ts).strftime("%d/%m %H:%M")
                     except ValueError:
                         ts = ts[:16]
-                q_hash = e.get("question_sha256", "")[:10]
+                e.get("question_sha256", "")[:10]
                 src_count = len(e.get("sources", []))
                 rlen = e.get("response_length", 0)
                 rt = e.get("response_time_ms")

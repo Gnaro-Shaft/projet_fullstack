@@ -1,11 +1,9 @@
 import os
-from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
 import streamlit as st
 from dotenv import load_dotenv
-
 
 load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")

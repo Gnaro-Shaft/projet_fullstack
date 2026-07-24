@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-
 logger = logging.getLogger("trustrag.audit")
 
 _DELETED_FLAG = "__deleted__"

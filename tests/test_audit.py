@@ -40,7 +40,7 @@ def test_delete_entry_does_not_remove_file(tmp_path) -> None:
     audit = AuditLogger(str(audit_path))
     entry = audit.record_chat("question", "réponse", [])
     audit.delete_entry(entry["request_id"])
-    lines = [json.loads(l) for l in audit_path.read_text(encoding="utf-8").strip().split("\n")]
+    lines = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").strip().split("\n")]
     assert len(lines) == 2
     assert lines[0]["event"] == "chat"
     assert lines[1]["event"] == "__deleted__"

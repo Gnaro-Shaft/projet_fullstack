@@ -190,7 +190,7 @@ class QdrantStore:
                 }
             )
         return results
-    
+
     def _ensure_payload_indexes(self) -> None:
         for field_name in ("document_id", "source"):
             self.client.create_payload_index(

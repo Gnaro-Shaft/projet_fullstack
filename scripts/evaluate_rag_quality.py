@@ -155,7 +155,7 @@ async def evaluate_rag_quality(
         question = item["question"]
         expected_id = item["expected_document_id"]
         key_facts = item.get("expected_key_facts", [])
-        requires_source = item.get("requires_source_citation", True)
+        item.get("requires_source_citation", True)
 
         logger.info("Évaluation : %s", question[:60])
 
@@ -266,7 +266,7 @@ async def main() -> None:
 
     if args.print:
         s = report["summary"]
-        print(f"\n=== RAPPORT QUALITÉ RAG ===")
+        print("\n=== RAPPORT QUALITÉ RAG ===")
         print(f"Questions : {s['total_questions']}")
         print(f"Retrieval success : {s['retrieval_success_rate']:.1%}")
         print(f"Fidélité : {s['avg_faithfulness']}/5")
@@ -322,7 +322,7 @@ async def main() -> None:
         print(f"\n❌ QUALITY GATE FAILED: {'; '.join(failures)}")
         raise SystemExit(1)
     else:
-        print(f"\n✅ Quality gate passed")
+        print("\n✅ Quality gate passed")
 
 
 if __name__ == "__main__":
