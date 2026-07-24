@@ -335,7 +335,7 @@ def create_app() -> FastAPI:
         try:
             anonymized = request.app.state.rag.pii.anonymize(payload.message).text
             vector = (await request.app.state.rag.llm.get_embeddings([anonymized]))[0]
-            candidates = await run_in_threadpool(request.app.state.rag.qdrant.search, vector, 12)
+            candidates = await run_in_threadpool(request.app.state.rag.qdrant.search, vector, 30)
 
             context_chunks = rerank_results(payload.message, candidates, top_k=8, deduplicate=False)
             source_chunks = rerank_results(payload.message, context_chunks, top_k=8, deduplicate=True)

@@ -26,7 +26,7 @@ class RagPipeline:
         pii: PIIAnonymizer,
         audit: AuditLogger,
         top_k: int = 8,
-        search_limit: int = 12,
+        search_limit: int = 30,
     ) -> None:
         self.llm = llm
         self.qdrant = qdrant
