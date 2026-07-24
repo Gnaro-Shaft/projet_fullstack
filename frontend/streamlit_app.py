@@ -139,14 +139,7 @@ def display_feedback(msg_index: int) -> None:
 def main() -> None:
     apply_style()
 
-    st.sidebar.markdown(
-        '<div style="text-align:center;padding:1rem 0;">'
-        '<a href="/{}/%F0%9F%93%8A_Dashboard" target="_blank" '
-        'style="display:inline-block;background:#000091;color:#fff;'
-        'padding:0.5rem 1.2rem;border-radius:6px;text-decoration:none;font-weight:600;">'
-        '\U0001f4ca Dashboard</a></div>',
-        unsafe_allow_html=True,
-    )
+    st.sidebar.page_link("pages/\U0001f4ca_Dashboard.py", label="\U0001f4ca Dashboard")
 
     if not st.session_state.get("consent_given"):
         st.markdown(

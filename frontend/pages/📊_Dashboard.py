@@ -86,6 +86,8 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    st.sidebar.page_link("streamlit_app.py", label="\U0001f1eb\U0001f1f7 Service Public")
+
     auth_headers = {"X-Admin-Key": st.session_state.admin_key} if st.session_state.admin_key else None
 
     metrics = fetch_json("/metrics")
