@@ -35,7 +35,7 @@ class RagPipeline:
         self.top_k = top_k
         self.search_limit = search_limit
 
-    async def execute(self, message: str, min_relevance: float = 0.4, min_title_keyword: float = 0.3) -> RagResult:
+    async def execute(self, message: str, min_relevance: float = 0.4, min_title_keyword: float = 0.2) -> RagResult:
         anonymized = self.pii.anonymize(message).text
 
         vector = (await self.llm.get_embeddings([anonymized]))[0]
