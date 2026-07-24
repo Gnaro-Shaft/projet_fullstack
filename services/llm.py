@@ -1,12 +1,20 @@
 import asyncio
 import os
 import random
+from dataclasses import dataclass
 
 import httpx
 
 
 class MistralAPIError(Exception):
     """Raised when Mistral cannot provide a usable response."""
+
+
+@dataclass
+class LlmResponse:
+    text: str
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class MistralClient:
@@ -23,7 +31,7 @@ class MistralClient:
         self.embedding_model = os.getenv("MISTRAL_EMBEDDING_MODEL", "mistral-embed")
         self.max_retries = max_retries if max_retries is not None else int(os.getenv("MISTRAL_MAX_RETRIES", "5"))
 
-    async def get_response(self, message: str, context: list[str] | None = None) -> str:
+    async def get_response(self, message: str, context: list[str] | None = None) -> LlmResponse:
         messages = []
         if context:
             system_prompt = (
@@ -53,11 +61,16 @@ class MistralClient:
         try:
             response = await self._post("/chat/completions", {"model": self.model, "messages": messages})
             content = response["choices"][0]["message"]["content"]
+            usage = response.get("usage", {})
         except (KeyError, IndexError, TypeError, ValueError) as error:
             raise MistralAPIError("Mistral API returned an unexpected response.") from error
         if not isinstance(content, str) or not content.strip():
             raise MistralAPIError("Mistral API returned an empty response.")
-        return content
+        return LlmResponse(
+            text=content,
+            input_tokens=usage.get("prompt_tokens", 0),
+            output_tokens=usage.get("completion_tokens", 0),
+        )
 
     async def get_response_stream(self, message: str, context: list[str] | None = None):
         messages = []

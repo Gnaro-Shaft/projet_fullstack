@@ -1,13 +1,14 @@
 from fastapi.testclient import TestClient
 
 from services.audit import AuditLogger
+from services.llm import LlmResponse
 from services.main import app
 from services.rag.pipeline import RagPipeline
 
 
 class FakeLLM:
-    async def get_response(self, message: str, context=None) -> str:
-        return f"Réponse : {message}"
+    async def get_response(self, message: str, context=None) -> LlmResponse:
+        return LlmResponse(text=f"Réponse : {message}", input_tokens=10, output_tokens=5)
 
     async def get_embeddings(self, texts: list[str]) -> list[list[float]]:
         return [[0.1, 0.2] for _ in texts]
@@ -37,7 +38,7 @@ class FakePII:
 
 class FakeAudit:
     def record_chat(self, question, response, sources, **kwargs):
-        pass
+        return {"request_id": "fake-request-id", "sources": sources}
 
 
 def make_fake_rag() -> RagPipeline:
@@ -56,8 +57,10 @@ def test_chat() -> None:
         app.state.rag = make_fake_rag()
         response = client.post("/chat", json={"message": "Bonjour"})
     assert response.status_code == 200
-    assert response.json()["response"] == "Réponse : Bonjour"
-    assert response.json()["sources"][0]["score"] == 0.99
+    data = response.json()
+    assert data["response"] == "Réponse : Bonjour"
+    assert data["sources"][0]["score"] == 0.99
+    assert data["request_id"] == "fake-request-id"
 
 
 def test_chat_rejects_empty_message() -> None:

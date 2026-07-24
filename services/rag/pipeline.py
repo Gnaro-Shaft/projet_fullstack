@@ -14,6 +14,8 @@ class RagResult:
     response: str
     sources: list[dict[str, Any]]
     anonymized_question: str = ""
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class RagPipeline:
@@ -47,11 +49,16 @@ class RagPipeline:
             return RagResult(response=no_result, sources=[], anonymized_question=anonymized)
 
         llm_context = self._format_context(context_chunks)
-        response = await self.llm.get_response(anonymized, llm_context)
-        response = self.pii.anonymize(response).text
+        llm_result = await self.llm.get_response(anonymized, llm_context)
+        safe_response = self.pii.anonymize(llm_result.text).text
 
         public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
-        return RagResult(response=response, sources=public_sources, anonymized_question=anonymized)
+        return RagResult(
+            response=safe_response, sources=public_sources,
+            anonymized_question=anonymized,
+            input_tokens=llm_result.input_tokens,
+            output_tokens=llm_result.output_tokens,
+        )
 
     @staticmethod
     def _format_context(chunks: list[dict[str, Any]]) -> list[str]:

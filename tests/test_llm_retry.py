@@ -41,14 +41,14 @@ class FakeAsyncClient:
 def test_mistral_retries_after_rate_limit() -> None:
     FakeAsyncClient.responses = [
         FakeResponse(429, {"message": "rate limit"}, {"Retry-After": "0"}),
-        FakeResponse(200, {"choices": [{"message": {"content": "OK"}}]}),
+        FakeResponse(200, {"choices": [{"message": {"content": "OK"}}], "usage": {"prompt_tokens": 10, "completion_tokens": 5}}),
     ]
     client = MistralClient(api_key="test", max_retries=1)
 
     with patch("services.llm.httpx.AsyncClient", FakeAsyncClient):
         response = asyncio.run(client.get_response("Bonjour"))
 
-    assert response == "OK"
+    assert response.text == "OK"
     assert FakeAsyncClient.responses == []
 
 

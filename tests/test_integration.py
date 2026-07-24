@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from services.audit import AuditLogger
+from services.llm import LlmResponse
 from services.main import app
 from services.pii import PIIAnonymizer
 from services.qdrant_store import QdrantStore
@@ -24,7 +25,7 @@ class FakeLLM:
     def __init__(self, embeddings_dim: int = 4):
         self.embeddings_dim = embeddings_dim
 
-    async def get_response(self, message: str, context=None) -> str:
+    async def get_response(self, message: str, context=None) -> LlmResponse:
         if context:
             titles = []
             for c in context:
@@ -32,11 +33,13 @@ class FakeLLM:
                     if line.startswith("Titre :"):
                         titles.append(line.replace("Titre : ", "").strip())
             sources = ", ".join(titles) if titles else "documents"
-            return f"Réponse basée sur : {sources}"
-        return "Réponse sans contexte."
+            text = f"Réponse basée sur : {sources}"
+        else:
+            text = "Réponse sans contexte."
+        return LlmResponse(text=text, input_tokens=10, output_tokens=5)
 
     async def get_response_stream(self, message: str, context=None):
-        full = await self.get_response(message, context)
+        full = (await self.get_response(message, context)).text
         for char in full:
             yield char
 

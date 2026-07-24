@@ -102,18 +102,32 @@ def display_sources(sources: list[dict]) -> None:
             st.markdown(f'<div class="source-card">{title}{meta}</div>', unsafe_allow_html=True)
 
 
+def send_feedback(request_id: str, score: str) -> bool:
+    try:
+        r = httpx.post(f"{BACKEND_URL}/feedback", json={"request_id": request_id, "score": score}, timeout=10.0)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def display_feedback(msg_index: int) -> None:
     key = f"feedback_{msg_index}"
     if key not in st.session_state:
         st.session_state[key] = None
     current = st.session_state[key]
+    msg = st.session_state.messages[msg_index]
+    request_id = msg.get("request_id", "")
     col1, col2, col3 = st.columns([1, 1, 8])
     thumbs_up = col1.button("\U0001f44d", key=f"up_{msg_index}", help="Utile")
     thumbs_down = col2.button("\U0001f44e", key=f"down_{msg_index}", help="Pas utile")
     if thumbs_up:
+        if request_id:
+            send_feedback(request_id, "positive")
         st.session_state[key] = "up"
         st.rerun()
     if thumbs_down:
+        if request_id:
+            send_feedback(request_id, "negative")
         st.session_state[key] = "down"
         st.rerun()
     if current == "up":
@@ -246,6 +260,7 @@ def main() -> None:
                 "content": answer,
                 "sources": sources,
                 "time_ms": time_ms,
+                "request_id": result.get("request_id", ""),
             },
         ]
         st.rerun()

@@ -3,6 +3,7 @@ import json
 import logging
 import secrets
 import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -28,8 +29,11 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    request_id: str
     response: str
     sources: list[dict] = Field(default_factory=list)
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class Document(BaseModel):
@@ -56,6 +60,11 @@ class DeleteConversationResponse(BaseModel):
     deleted: bool
 
 
+class FeedbackRequest(BaseModel):
+    request_id: str = Field(min_length=1)
+    score: str = Field(pattern=r"^(positive|negative)$")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     llm = MistralClient()
@@ -73,6 +82,22 @@ def create_app() -> FastAPI:
         version="0.2.0",
         lifespan=lifespan,
     )
+
+    rate_limit_store: dict[str, list[float]] = defaultdict(list)
+    RATE_LIMIT = int(os.getenv("RATE_LIMIT_PER_MINUTE", "30"))
+
+    @application.middleware("http")
+    async def rate_limit_middleware(request: Request, call_next):
+        if request.url.path in ("/metrics", "/health", "/ping", "/qdrant/health"):
+            return await call_next(request)
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.monotonic()
+        window = rate_limit_store[client_ip]
+        window[:] = [t for t in window if now - t < 60.0]
+        if len(window) >= RATE_LIMIT:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+        window.append(now)
+        return await call_next(request)
 
     @application.middleware("http")
     async def metrics_middleware(request: Request, call_next):
@@ -110,14 +135,47 @@ def create_app() -> FastAPI:
         except Exception as e:
             collection_info = {"error": str(e)}
 
+        audit = request.app.state.rag.audit
+        recent = audit.recent_entries(limit=100)
+        error_count = sum(1 for e in recent if e.get("error"))
+        total = len(recent)
+        rt_values = [e["response_time_ms"] for e in recent if e.get("response_time_ms")]
+        tokens_in = sum(e.get("input_tokens", 0) for e in recent)
+        tokens_out = sum(e.get("output_tokens", 0) for e in recent)
+        feedbacks = [e for e in audit._read_entries() if e.get("event") == "feedback"]
+        positive_fb = sum(1 for e in feedbacks if e.get("score") == "positive")
+        negative_fb = sum(1 for e in feedbacks if e.get("score") == "negative")
+
         return {
             "version": "0.2.0",
             "uptime_seconds": time.monotonic() - request.app.state.start_time,
             "chat_requests_total": chat_count,
             "collection": collection_info,
+            "latency": {
+                "min_ms": min(rt_values) if rt_values else 0,
+                "avg_ms": round(sum(rt_values) / len(rt_values), 1) if rt_values else 0,
+                "max_ms": max(rt_values) if rt_values else 0,
+                "p50_ms": sorted(rt_values)[len(rt_values) // 2] if rt_values else 0,
+                "p95_ms": sorted(rt_values)[int(len(rt_values) * 0.95)] if rt_values else 0,
+                "p99_ms": sorted(rt_values)[int(len(rt_values) * 0.99)] if rt_values else 0,
+            },
+            "errors": {
+                "count": error_count,
+                "rate": round(error_count / total, 3) if total else 0,
+            },
+            "tokens": {
+                "total_input": tokens_in,
+                "total_output": tokens_out,
+                "total": tokens_in + tokens_out,
+            },
+            "feedback": {
+                "positive": positive_fb,
+                "negative": negative_fb,
+            },
             "endpoints": {
                 "chat": "/chat",
                 "chat_stream": "/chat/stream",
+                "feedback": "/feedback",
                 "health": "/health",
                 "metrics": "/metrics",
                 "qdrant_health": "/qdrant/health",
@@ -154,8 +212,8 @@ def create_app() -> FastAPI:
             all_ok = False
 
         try:
-            response = await request.app.state.rag.llm.get_response("Réponds 'ok'")
-            checks["llm"] = "ok" if "ok" in response.lower() else "unexpected"
+            llm_resp = await request.app.state.rag.llm.get_response("Réponds 'ok'")
+            checks["llm"] = "ok" if "ok" in llm_resp.text.lower() else "unexpected"
         except MistralAPIError as e:
             checks["llm"] = str(e)
             all_ok = False
@@ -202,6 +260,10 @@ def create_app() -> FastAPI:
 
     @application.get("/audit/recent")
     async def audit_recent(request: Request, limit: int = 20) -> list[dict]:
+        admin_key = os.getenv("ADMIN_API_KEY")
+        provided_key = request.headers.get("X-Admin-Key", "")
+        if not admin_key or not secrets.compare_digest(provided_key, admin_key):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrative key required.")
         return request.app.state.rag.audit.recent_entries(limit=min(limit, 100))
 
     @application.delete("/conversations/{request_id}", response_model=DeleteConversationResponse)
@@ -220,6 +282,13 @@ def create_app() -> FastAPI:
                 detail=f"No conversation found with request_id '{request_id}'.",
             )
         return DeleteConversationResponse(request_id=request_id, deleted=True)
+
+    @application.post("/feedback")
+    async def feedback(payload: FeedbackRequest, request: Request) -> dict:
+        success = request.app.state.rag.audit.record_feedback(payload.request_id, payload.score)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request ID not found.")
+        return {"status": "ok"}
 
     @application.post("/chat", response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
@@ -242,13 +311,19 @@ def create_app() -> FastAPI:
                 detail=str(error),
             ) from error
         elapsed = time.monotonic() - start
-        request.app.state.rag.audit.record_chat(
+        event = request.app.state.rag.audit.record_chat(
             result.anonymized_question, result.response, result.sources,
             client_ip=client_ip,
             user_agent=user_agent,
             response_time_ms=round(elapsed * 1000),
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
         )
-        return ChatResponse(response=result.response, sources=result.sources)
+        return ChatResponse(
+            request_id=event["request_id"],
+            response=result.response, sources=result.sources,
+            input_tokens=result.input_tokens, output_tokens=result.output_tokens,
+        )
 
     @application.post("/chat/stream")
     async def chat_stream(payload: ChatRequest, request: Request):

@@ -37,6 +37,8 @@ class AuditLogger:
         client_ip: str | None = None,
         user_agent: str | None = None,
         response_time_ms: float | None = None,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
         error: str | None = None,
     ) -> dict[str, Any]:
         """Enregistre les éléments utiles sans écrire la question originale.
@@ -51,6 +53,8 @@ class AuditLogger:
             "question_sha256": hashlib.sha256(question.encode("utf-8")).hexdigest(),
             "response_length": len(response),
             "response_time_ms": response_time_ms,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
             "client_ip": self._anonymize_ip(client_ip) if client_ip else None,
             "user_agent": user_agent[:200] if user_agent else None,
             "error": error,
@@ -135,6 +139,21 @@ class AuditLogger:
             if e.get("event") != _DELETED_FLAG
             and e["request_id"] not in deleted
         }
+
+    def record_feedback(self, request_id: str, score: str) -> bool:
+        exists = self.entry_exists(request_id)
+        if not exists:
+            return False
+        event = {
+            "event": "feedback",
+            "request_id": request_id,
+            "score": score,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+        with self.path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+        logger.info("feedback request_id=%s score=%s", request_id, score)
+        return True
 
     def entry_exists(self, request_id: str) -> bool:
         return request_id in self.active_entry_ids()
