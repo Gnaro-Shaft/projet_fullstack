@@ -356,11 +356,14 @@ def create_app() -> FastAPI:
                 safe = request.app.state.rag.pii.anonymize(full).text
                 public_sources = [{k: v for k, v in s.items() if k != "text"} for s in source_chunks]
                 elapsed = time.monotonic() - start
+                usage = getattr(request.app.state.rag.llm, "_last_usage", {})
                 request.app.state.rag.audit.record_chat(
                     anonymized, safe, public_sources,
                     client_ip=client_ip,
                     user_agent=user_agent,
                     response_time_ms=round(elapsed * 1000),
+                    input_tokens=usage.get("prompt_tokens", 0),
+                    output_tokens=usage.get("completion_tokens", 0),
                 )
                 yield f"data: {json.dumps({'done': True, 'sources': public_sources})}\n\n"
 

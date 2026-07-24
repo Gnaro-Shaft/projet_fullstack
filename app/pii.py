@@ -1,8 +1,11 @@
 """Anonymisation simple des données personnelles avant et après le RAG."""
 
+import logging
 import os
 import re
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 try:
     import spacy
@@ -43,8 +46,12 @@ class PIIAnonymizer:
         try:
             self.nlp = spacy.load(self.model_name)
         except OSError:
-            # Le modèle peut ne pas être installé pendant les tests.
-            # Les regex continuent de protéger les e-mails et téléphones.
+            logger.warning(
+                "Modèle spaCy '%s' non trouvé — fallback sur spacy.blank('fr') "
+                "(NER limité aux regex email/téléphone). Installez avec: "
+                "python -m spacy download %s",
+                self.model_name, self.model_name,
+            )
             self.nlp = spacy.blank("fr")
 
     def anonymize(self, text: str) -> AnonymizationResult:

@@ -109,6 +109,36 @@ class AuditLogger:
         """Retourne le nombre d'échanges non effacés."""
         return len(self.active_entry_ids())
 
+    def compact(self, *, force: bool = False, threshold: float = 0.3) -> int:
+        """Réécrit le fichier sans les tombstones ni les entrées effacées.
+
+        Retourne le nombre de lignes supprimées, 0 si la compaction n'est pas nécessaire.
+        """
+        if not self.path.exists():
+            return 0
+        entries = self._read_entries()
+        total = len(entries)
+        tombstone_count = sum(1 for e in entries if e.get("event") == _DELETED_FLAG)
+        if not force and (total == 0 or tombstone_count / total < threshold):
+            return 0
+        deleted_ids = {
+            e["request_id"]
+            for e in entries
+            if e.get("event") == _DELETED_FLAG
+        }
+        compacted = [
+            e for e in entries
+            if e.get("event") != _DELETED_FLAG
+            and e["request_id"] not in deleted_ids
+        ]
+        self.path.write_text(
+            "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in compacted),
+            encoding="utf-8",
+        )
+        removed = len(entries) - len(compacted)
+        logger.info("audit_compact removed=%d entries=%d", removed, len(compacted))
+        return removed
+
     def _read_entries(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []

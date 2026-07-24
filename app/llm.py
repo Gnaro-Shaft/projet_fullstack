@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import random
 from dataclasses import dataclass
@@ -73,6 +74,7 @@ class MistralClient:
         )
 
     async def get_response_stream(self, message: str, context: list[str] | None = None):
+        self._last_usage = {"prompt_tokens": 0, "completion_tokens": 0}
         messages = []
         if context:
             system_prompt = (
@@ -113,8 +115,10 @@ class MistralClient:
                         if data.strip() == "[DONE]":
                             break
                         try:
-                            import json
                             chunk = json.loads(data)
+                            usage = chunk.get("usage")
+                            if usage:
+                                self._last_usage = usage
                             delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
                             if delta:
                                 yield delta
