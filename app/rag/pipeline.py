@@ -44,15 +44,17 @@ class RagPipeline:
         context_chunks = rerank_results(message, candidates, top_k=self.top_k, deduplicate=False)
         source_chunks = rerank_results(message, context_chunks, top_k=self.top_k, deduplicate=True)
 
-        top = max(context_chunks, key=lambda c: c.get("rerank_score", 0)) if context_chunks else None
-        if (
-            not context_chunks
-            or top is None
-            or top.get("rerank_score", 0) < min_relevance
-            or top.get("title_keyword_score", 0) < min_title_keyword
-        ):
+        good_chunks = [
+            c for c in context_chunks
+            if c.get("rerank_score", 0) >= min_relevance
+            and c.get("title_keyword_score", 0) >= min_title_keyword
+        ]
+        if not good_chunks:
             no_result = "Je ne trouve pas cette information dans les documents disponibles."
             return RagResult(response=no_result, sources=[], anonymized_question=anonymized)
+
+        context_chunks = good_chunks
+        source_chunks = rerank_results(message, context_chunks, top_k=self.top_k, deduplicate=True)
 
         llm_context = self._format_context(context_chunks)
         llm_result = await self.llm.get_response(anonymized, llm_context)
