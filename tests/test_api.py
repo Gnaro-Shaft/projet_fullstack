@@ -23,7 +23,7 @@ class FakeQdrant:
         return len(documents)
 
     def search(self, vector, limit=4):
-        return [{"text": "Paris est la capitale de la France.", "metadata": {}, "score": 0.99}]
+        return [{"text": "Bonjour Paris est la capitale de la France.", "metadata": {}, "score": 0.99}]
 
     def delete_document(self, document_id, source):
         self.deleted.append((document_id, source))
