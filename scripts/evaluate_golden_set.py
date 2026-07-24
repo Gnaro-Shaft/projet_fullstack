@@ -3,6 +3,9 @@
 import argparse
 import asyncio
 import json
+import os
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +18,7 @@ from app.reranker import rerank_results
 load_dotenv()
 
 GOLDEN_SET_PATH = Path("tests/fixtures/golden_set.json")
+EVAL_HISTORY_PATH = Path(os.getenv("EVAL_HISTORY_PATH", "data/eval_history.json"))
 
 
 async def evaluate_golden_set(
@@ -75,9 +79,34 @@ async def main(top_k: int = 5) -> None:
     result = await evaluate_golden_set(MistralClient(), QdrantStore(), top_k=top_k)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
+    commit = "unknown"
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        pass
+    history_entry = {
+        "type": "retrieval",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "commit": commit,
+        "summary": {
+            "hit_at_1": result["hit_at_1"],
+            "hit_at_3": result["hit_at_3"],
+            "hit_at_5": result["hit_at_5"],
+            "mrr": result["mrr"],
+            "k": top_k,
+            "total": result["total"],
+        },
+        "params": {"top_k": top_k},
+    }
+    EVAL_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    history = json.loads(EVAL_HISTORY_PATH.read_text(encoding="utf-8")) if EVAL_HISTORY_PATH.exists() else []
+    history.append(history_entry)
+    EVAL_HISTORY_PATH.write_text(json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Historique sauvegardé : {EVAL_HISTORY_PATH}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--top-k", type=int, default=4)
+    parser.add_argument("--top-k", type=int, default=5)
     arguments = parser.parse_args()
     asyncio.run(main(arguments.top_k))

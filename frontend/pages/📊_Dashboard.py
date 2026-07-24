@@ -177,31 +177,66 @@ def main() -> None:
             f'<span class="sub">{len(eval_history)} runs d\'évaluation</span>',
             unsafe_allow_html=True,
         )
-        ev_df = pd.DataFrame([
-            {
-                "run": i + 1,
-                "run_label": f"#{i+1}" + (f" ({e['commit'][:7]})" if e.get("commit", "unknown") != "unknown" else ""),
-                "timestamp": e.get("timestamp", "")[:19],
-                "global": e["summary"]["overall_quality"],
-                "fidélité": e["summary"]["avg_faithfulness"] / 5,
-                "complétude": e["summary"]["avg_completeness"] / 5,
-                "anti-hallucination": e["summary"]["avg_hallucination_absence"] / 5,
-                "sources": e["summary"]["avg_source_usage"] / 5,
-            }
-            for i, e in enumerate(eval_history)
-        ])
-        chart_cols = ["global", "fidélité", "complétude", "anti-hallucination", "sources"]
-        st.line_chart(ev_df.set_index("run")[chart_cols], height=180)
-        latest = eval_history[-1]["summary"]
-        st.markdown(
-            f'<span class="sub">Dernier run : {ev_df.iloc[-1]["timestamp"]} &nbsp;|&nbsp; '
-            f"Global: {latest['overall_quality']:.0%} &nbsp;|&nbsp; "
-            f"Fidélité: {latest['avg_faithfulness']}/5 &nbsp;|&nbsp; "
-            f"Complétude: {latest['avg_completeness']}/5 &nbsp;|&nbsp; "
-            f"Hallucination: {latest['avg_hallucination_absence']}/5 &nbsp;|&nbsp; "
-            f"Sources: {latest['avg_source_usage']}/5</span>",
-            unsafe_allow_html=True,
-        )
+
+        rag_runs = [e for e in eval_history if e.get("type", "rag_quality") == "rag_quality"]
+        retrieval_runs = [e for e in eval_history if e.get("type") == "retrieval"]
+
+        if rag_runs:
+            ev_df = pd.DataFrame([
+                {
+                    "run": i + 1,
+                    "run_label": f"#{i+1}" + (f" ({e['commit'][:7]})" if e.get("commit", "unknown") != "unknown" else ""),
+                    "timestamp": e.get("timestamp", "")[:19],
+                    "global": e["summary"]["overall_quality"],
+                    "fidélité": e["summary"]["avg_faithfulness"] / 5,
+                    "complétude": e["summary"]["avg_completeness"] / 5,
+                    "anti-hallucination": e["summary"]["avg_hallucination_absence"] / 5,
+                    "sources": e["summary"]["avg_source_usage"] / 5,
+                }
+                for i, e in enumerate(rag_runs)
+            ])
+            chart_cols = ["global", "fidélité", "complétude", "anti-hallucination", "sources"]
+            st.line_chart(ev_df.set_index("run")[chart_cols], height=180)
+            latest = rag_runs[-1]["summary"]
+            st.markdown(
+                f'<span class="sub">Dernier run RAG : {ev_df.iloc[-1]["timestamp"]} &nbsp;|&nbsp; '
+                f"Global: {latest['overall_quality']:.0%} &nbsp;|&nbsp; "
+                f"Fidélité: {latest['avg_faithfulness']}/5 &nbsp;|&nbsp; "
+                f"Hallucination: {latest['avg_hallucination_absence']}/5</span>",
+                unsafe_allow_html=True,
+            )
+
+        if retrieval_runs:
+            latest_r = retrieval_runs[-1]["summary"]
+            st.markdown(
+                f'<div style="margin-top:0.5rem;"><span class="sub">'
+                f'<strong>Retrieval</strong> &nbsp;|&nbsp; '
+                f'Dernier run : {retrieval_runs[-1]["timestamp"][:19]} &nbsp;|&nbsp; '
+                f'Hit@1: <strong>{latest_r["hit_at_1"]:.0%}</strong> &nbsp;|&nbsp; '
+                f'Hit@3: <strong>{latest_r["hit_at_3"]:.0%}</strong> &nbsp;|&nbsp; '
+                f'Hit@5: <strong>{latest_r["hit_at_5"]:.0%}</strong> &nbsp;|&nbsp; '
+                f'MRR: <strong>{latest_r["mrr"]:.3f}</strong></span></div>',
+                unsafe_allow_html=True,
+            )
+
+        if retrieval_runs and eval_history:
+            all_df = pd.DataFrame([
+                {
+                    "run": i + 1,
+                    "run_label": f"#{i+1}" + (f" ({e['commit'][:7]})" if e.get("commit", "unknown") != "unknown" else ""),
+                    "hit@1": e["summary"]["hit_at_1"],
+                    "hit@3": e["summary"]["hit_at_3"],
+                    "hit@5": e["summary"]["hit_at_5"],
+                    "mrr": e["summary"]["mrr"],
+                }
+                for i, e in enumerate(retrieval_runs)
+            ])
+            if len(all_df) > 1:
+                st.line_chart(
+                    all_df.set_index("run")[["hit@1", "hit@3", "hit@5", "mrr"]],
+                    height=140,
+                )
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     if audit_entries:

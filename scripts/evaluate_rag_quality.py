@@ -305,6 +305,7 @@ async def main() -> None:
     except Exception:
         pass
     history_entry = {
+        "type": "rag_quality",
         "timestamp": datetime.now(UTC).isoformat(),
         "commit": commit,
         "summary": s,
