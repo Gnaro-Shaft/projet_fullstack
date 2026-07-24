@@ -1,6 +1,6 @@
-# Projet FULSTACK
+# Projet FULLSTACK
 
-API FastAPI qui combine Mistral et Qdrant pour répondre à partir de documents indexés.
+API FastAPI + Mistral + Qdrant + Streamlit — assistant RAG aux démarches administratives françaises.
 
 ## Démarrer en local
 
@@ -13,8 +13,7 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-L'API est disponible sur `http://localhost:8000` et sa documentation sur
-`http://localhost:8000/docs`.
+API sur `http://localhost:8000`, docs sur `http://localhost:8000/docs`.
 
 ```bash
 curl http://localhost:8000/ping
@@ -23,195 +22,126 @@ curl -X POST http://localhost:8000/chat \
   -d '{"message":"Bonjour"}'
 ```
 
-## Qdrant / RAG
-
-Configure `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` et
-`MISTRAL_API_KEY` dans `.env`, puis indexe tes documents :
-
-```bash
-curl -X POST http://localhost:8000/documents \
-  -H 'Content-Type: application/json' \
-  -d '{"documents":[{"text":"Paris est la capitale de la France.","metadata":{"source":"démo"}}]}'
-
-curl -X POST http://localhost:8000/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"Quelle est la capitale de la France ?"}'
-```
-
-`GET /qdrant/health` vérifie la connexion. Avec Docker, `docker compose up --build`
-lance aussi Qdrant localement ; l'API s'y connecte automatiquement.
-
-## Télécharger la source Service-Public
-
-Le script conserve localement la dernière archive XML et un manifeste de version
-dans `data/raw/service-public/`. Il utilise l'en-tête `ETag` : si la source n'a
-pas changé, aucun fichier n'est téléchargé.
-
-```bash
-python scripts/download_service_public.py
-```
-
-Les archives et leurs manifestes sont volontairement ignorés par Git.
-
-Pour vérifier l'extraction des fiches `F*.xml` en fragments indexables :
-
-```bash
-python scripts/extract_service_public.py
-```
-
-Pour synchroniser les fiches modifiées dans Qdrant :
-
-```bash
-python scripts/sync_service_public.py
-```
-
-Le premier lancement indexe toutes les fiches ; les suivants ne créent des
-embeddings que pour les fiches nouvelles ou modifiées.
-
-Pour mesurer le retrieval sur les questions de référence :
-
-```bash
-python -m scripts.evaluate_golden_set
-```
-
-Le résultat affiche le `recall@4` et les IDs effectivement retrouvés.
-
-## Évaluation de la qualité des réponses RAG
-
-Le pipeline d'évaluation teste chaque réponse sur 4 dimensions via LLM-as-judge (Mistral) :
-
-| Dimension | Score | Définition |
-|---|---|---|
-| **Fidélité** | 0–5 | La réponse reste-t-elle fidèle au contexte fourni ? |
-| **Complétude** | 0–5 | La réponse couvre-t-elle tous les aspects de la question ? |
-| **Absence d'hallucination** | 0–5 | Aucune information inventée ? |
-| **Usage des sources** | 0–5 | Les sources sont-elles correctement citées ? |
-
-Le golden set enrichi (`tests/fixtures/golden_set.json`) contient les faits attendus et les anti-faits (hallucinations typiques) pour chaque question.
-
-```bash
-# Lancer l'évaluation complète
-python -m scripts.evaluate_rag_quality --print
-
-# Sauvegarder le rapport dans un fichier
-python -m scripts.evaluate_rag_quality --output data/evaluation/rag_report.json
-```
-
-## Synchroniser EUR-Lex
-
-Le connecteur EUR-Lex récupère les notifications récentes, identifie les
-documents par leur numéro CELEX, télécharge le texte intégral disponible, le
-découpe en fragments et crée les embeddings dans Qdrant.
-
-```bash
-# Tester avec une seule notice
-python -m scripts.sync_legal_feed --limit 1
-
-# Synchroniser les notices disponibles
-python -m scripts.sync_legal_feed
-
-# Réindexer des notices déjà présentes (après une correction du connecteur)
-python -m scripts.sync_legal_feed --limit 20 --force-full-text
-```
-
-Les documents déjà à jour sont ignorés grâce à leur hash. Certains actes
-peuvent rester en métadonnées seules si EUR-Lex renvoie `404` pour leur texte
-intégral ; ils restent néanmoins consultables comme sources.
-
-En cas de quota Mistral (`429`), le script attend automatiquement puis reporte
-le document concerné. Il suffit de relancer la synchronisation plus tard.
-
-Pour utiliser uniquement les notices sans télécharger les textes complets :
-
-```bash
-python -m scripts.sync_legal_feed --metadata-only
-```
-
-Le scheduler quotidien peut lancer les deux sources :
-
-```bash
-# Exécuter une synchronisation puis quitter (utile pour un cron)
-python -m scripts.scheduler --once
-
-# Lancer une boucle toutes les 24 heures
-python -m scripts.scheduler --interval 86400
-```
-
-## Déploiement Fly.io
-
-Les deux applications Fly.io utilisent leurs fichiers de configuration dédiés :
-
-```bash
-# Backend FastAPI
-fly deploy --config fly.toml --app projet-fullstack
-
-# Frontend Streamlit
-fly deploy --config fly.frontend.toml --app trustrag-frontend
-```
-
-Les secrets ne doivent pas être commités dans Git. Ils se configurent avec
-`fly secrets set`, par exemple :
-
-```bash
-fly secrets set \
-  MISTRAL_API_KEY="..." \
-  QDRANT_URL="..." \
-  QDRANT_API_KEY="..." \
-  QDRANT_COLLECTION="documents" \
-  ADMIN_API_KEY="..." \
-  --app projet-fullstack
-```
-
-Le frontend doit pointer vers l'URL publique du backend :
-
-```bash
-fly secrets set BACKEND_URL="https://projet-fullstack.fly.dev" \
-  --app trustrag-frontend
-```
-
-Le workflow GitHub Actions `.github/workflows/fly-deploy.yml` exécute les tests
-à chaque push sur `main`, puis déploie automatiquement le backend et le
-frontend. Le workflow `.github/workflows/sync-feeds.yml` lance les
-synchronisations quotidiennes ; ses secrets GitHub doivent contenir les mêmes
-valeurs Mistral et Qdrant que l'environnement de production.
-
-Après un déploiement, vérifier :
-
-```bash
-curl https://projet-fullstack.fly.dev/ping
-curl https://projet-fullstack.fly.dev/qdrant/health
-```
-
 ## Interface Streamlit
-
-Dans un second terminal, démarre l'interface :
 
 ```bash
 streamlit run frontend/streamlit_app.py
 ```
 
-Elle utilise `BACKEND_URL` (par défaut `http://localhost:8000`) et affiche
-l'historique du chat ainsi que les sources officielles retournées par l'API.
+Navigation multi-page (Chat → Dashboard), feedback persistant via API, affichage des sources et temps de réponse.
 
-## Streaming
+## Dashboard monitoring
 
-Un endpoint SSE permet de recevoir la réponse token par token :
+Pages dans `frontend/pages/` :
+
+| Page | Fonctionnalités |
+|---|---|
+| `📊_Dashboard.py` | Cartes KPIs, line chart temps réponse, bar chart volume, tokens (input/output), répartition statuts (OK/ERR/NS), top sources, évolution qualité RAG |
+
+Le dashboard lit `/audit/recent` et `/metrics` (protégé par `X-Admin-Key`).
+
+## Endpoints API
+
+| Endpoint | Description |
+|---|---|
+| `GET /ping` | Healthcheck simple |
+| `GET /health` | Vérifie Qdrant + embeddings + LLM (retourne JSON, `503` si défaillant) |
+| `GET /metrics` | Métriques JSON : uptime, requêtes, docs indexés, tokens total, erreurs, latences (p50/p95/p99), top sources |
+| `POST /chat` | Réponse RAG complète (sources + tokens) |
+| `POST /chat/stream` | Réponse SSE token par token (avec tokens dans l'audit log) |
+| `POST /documents` | Indexe des documents dans Qdrant |
+| `GET /qdrant/health` | État de Qdrant |
+| `POST /feedback` | Enregistre un feedback (`request_id` + `score`: positive/negative) |
+| `DELETE /audit/{request_id}` | Marque une entrée comme effacée (RGPD) |
+| `GET /audit/recent` | Dernières entrées d'audit (protégé par `X-Admin-Key`) |
+| `GET /eval/history` | Historique des évaluations qualité RAG |
+
+### Rate limiting
+
+Middleware FastAPI — 30 requêtes/min/IP par défaut. Configurable via `RATE_LIMIT_PER_MINUTE`.
+
+### Authentification
+
+Les endpoints sensibles (`/audit/recent`, entrées par request_id) nécessitent l'en-tête `X-Admin-Key` correspondant à la variable d'environnement `ADMIN_API_KEY`.
+
+## Qdrant / RAG
+
+Configure `QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_COLLECTION` et `MISTRAL_API_KEY` :
 
 ```bash
-curl -X POST http://localhost:8000/chat/stream \
+curl -X POST http://localhost:8000/documents \
   -H 'Content-Type: application/json' \
-  -d '{"message":"Quelles sont les conditions pour un logement social ?"}'
+  -d '{"documents":[{"text":"Paris est la capitale de la France.","metadata":{"source":"démo"}}]}'
 ```
 
-L'interface Streamlit affiche le temps de réponse et permet un retour utilisateur (pouce vert/rouge). L'historique persiste le temps de la session.
+`docker compose up --build` lance Qdrant localement.
 
-Les appels Mistral retentent automatiquement les erreurs temporaires (`429`,
-`500`, `502`, `503`, `504`). `MISTRAL_MAX_RETRIES` permet de régler le nombre
-de tentatives.
+## Sources de données
 
-L'API anonymise les e-mails et téléphones avec des règles déterministes. La
-reconnaissance spaCy des personnes, organisations et lieux est désactivée par
-défaut pour éviter les faux positifs ; elle peut être activée après validation :
+### Service-Public
+
+```bash
+python scripts/download_service_public.py   # archive XML (ETag)
+python scripts/extract_service_public.py     # extraction en fragments
+python scripts/sync_service_public.py        # indexation Qdrant
+python -m scripts.evaluate_golden_set        # recall@4 sur questions de référence
+```
+
+### EUR-Lex
+
+```bash
+python -m scripts.sync_legal_feed --limit 1       # test
+python -m scripts.sync_legal_feed                  # toutes les notices
+python -m scripts.sync_legal_feed --force-full-text # réindexation forcée
+python -m scripts.sync_legal_feed --metadata-only  # sans texte intégral
+```
+
+### Scheduler
+
+```bash
+python -m scripts.scheduler --once             # une sync puis quitte
+python -m scripts.scheduler --interval 86400   # boucle 24h
+```
+
+## Évaluation qualité RAG
+
+LLM-as-judge (Mistral) sur 4 dimensions via le golden set enrichi (`tests/fixtures/golden_set.json`) :
+
+| Dimension | Score | Définition |
+|---|---|---|
+| **Fidélité** | 0–5 | Fidélité au contexte |
+| **Complétude** | 0–5 | Couvre tous les aspects |
+| **Absence d'hallucination** | 0–5 | Aucune information inventée |
+| **Usage des sources** | 0–5 | Sources correctement citées |
+
+```bash
+python -m scripts.evaluate_rag_quality --print
+python -m scripts.evaluate_rag_quality --output data/evaluation/rag_report.json
+# Avec quality gate (CI) :
+python -m scripts.evaluate_rag_quality --threshold 0.7 --min-faithfulness 3.5 --min-hallucination 3.5
+```
+
+L'historique est sauvegardé dans `data/eval_history.json` et consultable via `GET /eval/history`.
+
+## Token tracking
+
+`LlmResponse` contient `input_tokens` et `output_tokens`. Enregistrés dans l'audit log pour chaque appel RAG, y compris en streaming (capture du champ `usage` du dernier chunk Mistral).
+
+## Feedback utilisateur
+
+`POST /feedback` avec `request_id` + `score` (`positive`/`negative`). Stocké dans l'audit log. L'interface Streamlit envoie les pouces à l'API.
+
+## Audit log & RGPD
+
+- Question hashée (SHA-256), PII anonymisées avant écriture
+- IP anonymisée (dernier octet masqué)
+- Droit à l'effacement : `DELETE /audit/{request_id}` écrit un tombstone
+- Compaction automatique au-delà de 30% de tombstones via `AuditLogger.compact()`
+- Consultation : `GET /audit/recent` (protégé par `ADMIN_API_KEY`)
+
+## PII / NER spaCy
+
+Anonymisation regex (email, téléphone) + NER optionnel (personnes, organisations, lieux).
 
 ```bash
 python -m spacy download fr_core_news_sm
@@ -221,11 +151,37 @@ python -m spacy download fr_core_news_sm
 PII_ENABLE_NER=true
 ```
 
+Un `logger.warning` signale si le modèle spaCy est absent (fallback silencieux évité).
+
+## Retry & résilience
+
+Les appels Mistral retentent automatiquement (`429`, `500`, `502`, `503`, `504`). `MISTRAL_MAX_RETRIES` (défaut: 5). Backoff exponentiel + `Retry-After`.
+
 ## Tests
 
 ```bash
 pytest
 ```
+
+- Unitaires + intégration Qdrant (Docker/memory)
+- FakeLLM pour les tests sans appel Mistral
+- Couverture minimale 50% (`pytest-cov`, échoue en dessous)
+- Linting ruff (CI bloque si non conforme)
+
+## CI / CD
+
+Workflow `.github/workflows/fly-deploy.yml` (déclenché sur `push main`) :
+
+| Step | Description |
+|---|---|
+| Ruff | Vérifie le style |
+| Pytest --cov | Tests + couverture ≥ 50% |
+| Tests intégration | Qdrant docker + FakeLLM |
+| Quality gate | Golden set eval, bloque si overall < 70%, faithfulness < 3.5/5, hallucination < 3.5/5 |
+| Fly deploy | Déploie backend + frontend |
+| Smoke test | `curl /ping` après déploiement |
+
+Les synchronisations quotidiennes via `.github/workflows/sync-feeds.yml`.
 
 ## Docker
 
@@ -233,30 +189,35 @@ pytest
 docker compose up --build
 ```
 
-L'interface Gradio reste volontairement séparée de l'API.
-
-## Dashboard de monitoring
+## Déploiement Fly.io
 
 ```bash
-streamlit run frontend/dashboard.py
+# Backend
+fly deploy --config fly.toml --app projet-fullstack
+
+# Frontend
+fly deploy --config fly.frontend.toml --app trustrag-frontend
 ```
 
-Affiche en temps réel : statut du backend, nombre de requêtes, documents indexés, uptime, healthcheck et les dernières requêtes depuis le journal d'audit.
-
-## API /metrics
-
-L'endpoint `GET /metrics` expose les métriques au format JSON :
+Secrets :
 
 ```bash
-curl http://localhost:8000/metrics
+fly secrets set \
+  MISTRAL_API_KEY="..." \
+  QDRANT_URL="..." \
+  QDRANT_API_KEY="..." \
+  QDRANT_COLLECTION="documents" \
+  ADMIN_API_KEY="..." \
+  --app projet-fullstack
+
+fly secrets set BACKEND_URL="https://projet-fullstack.fly.dev" \
+  --app trustrag-frontend
 ```
 
-## API /health
-
-L'endpoint `GET /health` valide les 3 composants critiques :
+Vérification post-déploiement :
 
 ```bash
-curl http://localhost:8000/health
+curl https://projet-fullstack.fly.dev/ping
+curl https://projet-fullstack.fly.dev/qdrant/health
+curl -H "X-Admin-Key: $ADMIN_API_KEY" https://projet-fullstack.fly.dev/metrics
 ```
-
-Retourne `503` si Qdrant, les embeddings ou le LLM sont défaillants.
