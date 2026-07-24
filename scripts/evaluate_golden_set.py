@@ -21,9 +21,9 @@ async def evaluate_golden_set(
     llm: MistralClient,
     qdrant: QdrantStore,
     golden_set_path: Path = GOLDEN_SET_PATH,
-    top_k: int = 4,
+    top_k: int = 5,
 ) -> dict[str, Any]:
-    """Retourne le recall@k et le détail de chaque question testée."""
+    """Retourne le Hit@k, MRR et le détail de chaque question testée."""
     questions = json.loads(golden_set_path.read_text(encoding="utf-8"))
     details = []
 
@@ -31,11 +31,15 @@ async def evaluate_golden_set(
         question = item["question"]
         expected_id = item["expected_document_id"]
 
-        # Même étape d'embedding que pour une vraie question utilisateur.
         query_vector = (await llm.get_embeddings([question]))[0]
         candidates = qdrant.search(query_vector, limit=12)
-        sources = rerank_results(question, candidates, top_k=top_k)
+        sources = rerank_results(question, candidates, top_k=max(top_k, 5))
         retrieved_ids = [source.get("document_id") for source in sources]
+
+        rank = next(
+            (i + 1 for i, rid in enumerate(retrieved_ids) if rid == expected_id),
+            None,
+        )
 
         details.append(
             {
@@ -43,20 +47,31 @@ async def evaluate_golden_set(
                 "expected_document_id": expected_id,
                 "retrieved_document_ids": retrieved_ids,
                 "hit": expected_id in retrieved_ids,
+                "hit_at_1": expected_id in retrieved_ids[:1],
+                "hit_at_3": expected_id in retrieved_ids[:3],
+                "hit_at_5": expected_id in retrieved_ids[:5],
+                "rank": rank,
+                "reciprocal_rank": 1.0 / rank if rank else 0.0,
             }
         )
 
-    hits = sum(detail["hit"] for detail in details)
+    total = len(details)
+    hits = sum(d["hit"] for d in details)
+    rr_sum = sum(d["reciprocal_rank"] for d in details)
     return {
-        "recall_at_k": hits / len(details) if details else 0.0,
+        "hit_at_k": hits / total if total else 0.0,
         "k": top_k,
+        "hit_at_1": sum(d["hit_at_1"] for d in details) / total if total else 0.0,
+        "hit_at_3": sum(d["hit_at_3"] for d in details) / total if total else 0.0,
+        "hit_at_5": sum(d["hit_at_5"] for d in details) / total if total else 0.0,
+        "mrr": rr_sum / total if total else 0.0,
         "hits": hits,
-        "total": len(details),
+        "total": total,
         "details": details,
     }
 
 
-async def main(top_k: int = 4) -> None:
+async def main(top_k: int = 5) -> None:
     result = await evaluate_golden_set(MistralClient(), QdrantStore(), top_k=top_k)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

@@ -33,5 +33,10 @@ def test_golden_set_calculates_recall(tmp_path) -> None:
 
     result = asyncio.run(evaluate_golden_set(FakeLLM(), FakeQdrant(), golden_path))
 
-    assert result["recall_at_k"] == 1.0
+    assert result["hit_at_k"] == 1.0
+    assert result["hit_at_1"] == 1.0
+    assert result["hit_at_3"] == 1.0
+    assert result["hit_at_5"] == 1.0
+    assert result["mrr"] == 1.0
     assert result["hits"] == 1
+    assert result["details"][0]["rank"] == 1

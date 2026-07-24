@@ -84,7 +84,7 @@ curl -X POST http://localhost:8000/documents \
 python scripts/download_service_public.py   # archive XML (ETag)
 python scripts/extract_service_public.py     # extraction en fragments
 python scripts/sync_service_public.py        # indexation Qdrant
-python -m scripts.evaluate_golden_set        # recall@4 sur questions de référence
+python -m scripts.evaluate_golden_set        # Hit@1/3/5 + MRR sur questions de référence
 ```
 
 ### EUR-Lex
