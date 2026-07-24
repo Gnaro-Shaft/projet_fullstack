@@ -57,12 +57,6 @@ def apply_style() -> None:
         .consent-box ul { color: #555; font-size: 0.88rem; padding-left: 1.2rem; margin: 0 0 1.2rem; }
         .consent-box li { margin-bottom: 0.4rem; }
         [data-testid="stSidebarNav"] { display: none; }
-        .nav-btn {
-            display: block; background: #000091; color: #fff;
-            padding: 0.5rem 1.2rem; border-radius: 6px;
-            text-decoration: none; font-weight: 600; text-align: center;
-        }
-        .nav-btn:hover { background: #1212b3; color: #fff; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -146,10 +140,8 @@ def display_feedback(msg_index: int) -> None:
 def main() -> None:
     apply_style()
 
-    st.sidebar.markdown(
-        f'<a href="/%F0%9F%93%8A_Dashboard" class="nav-btn">\U0001f4ca Dashboard</a>',
-        unsafe_allow_html=True,
-    )
+    if st.sidebar.button("\U0001f4ca Dashboard", use_container_width=True, type="primary"):
+        st.switch_page("pages/\U0001f4ca_Dashboard.py")
 
     if not st.session_state.get("consent_given"):
         st.markdown(

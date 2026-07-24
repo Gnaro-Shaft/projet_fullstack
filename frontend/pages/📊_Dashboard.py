@@ -49,12 +49,6 @@ st.markdown(
 .log-entry:last-child { border: none; }
 .metric-grid { display: flex; gap: 1rem; flex-wrap: wrap; }
 [data-testid="stSidebarNav"] { display: none; }
-.nav-btn {
-    display: block; background: #000091; color: #fff;
-    padding: 0.5rem 1.2rem; border-radius: 6px;
-    text-decoration: none; font-weight: 600; text-align: center;
-}
-.nav-btn:hover { background: #1212b3; color: #fff; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -93,10 +87,8 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown(
-        '<a href="/" class="nav-btn">\U0001f1eb\U0001f1f7 Service Public</a>',
-        unsafe_allow_html=True,
-    )
+    if st.sidebar.button("\U0001f1eb\U0001f1f7 Service Public", use_container_width=True, type="primary"):
+        st.switch_page("streamlit_app.py")
 
     auth_headers = {"X-Admin-Key": st.session_state.admin_key} if st.session_state.admin_key else None
 

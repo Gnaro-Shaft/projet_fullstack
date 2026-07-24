@@ -87,7 +87,7 @@ Contexte (documents sources) :
 Réponse de l'assistant :
 {response}"""
     try:
-        result = await llm.get_response(judge_prompt, context=[JUDGE_SYSTEM_PROMPT])
+        result = (await llm.get_response(judge_prompt, context=[JUDGE_SYSTEM_PROMPT])).text
         result = result.strip()
         if result.startswith("```"):
             result = result.split("\n", 1)[1]
