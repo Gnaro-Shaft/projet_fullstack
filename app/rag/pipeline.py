@@ -35,7 +35,7 @@ class RagPipeline:
         self.top_k = top_k
         self.search_limit = search_limit
 
-    async def execute(self, message: str) -> RagResult:
+    async def execute(self, message: str, min_relevance: float = 0.3) -> RagResult:
         anonymized = self.pii.anonymize(message).text
 
         vector = (await self.llm.get_embeddings([anonymized]))[0]
@@ -44,7 +44,7 @@ class RagPipeline:
         context_chunks = rerank_results(message, candidates, top_k=self.top_k, deduplicate=False)
         source_chunks = rerank_results(message, context_chunks, top_k=self.top_k, deduplicate=True)
 
-        if not context_chunks:
+        if not context_chunks or not any(c.get("rerank_score", 0) >= min_relevance for c in context_chunks):
             no_result = "Je ne trouve pas cette information dans les documents disponibles."
             return RagResult(response=no_result, sources=[], anonymized_question=anonymized)
 
