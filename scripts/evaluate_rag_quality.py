@@ -239,6 +239,18 @@ async def main() -> None:
     parser.add_argument("--backend-url", default=BACKEND_URL)
     parser.add_argument("--output", default="data/evaluation/rag_quality_report.json")
     parser.add_argument("--print", action="store_true", help="Affiche le rapport dans la console")
+    parser.add_argument(
+        "--threshold", type=float, default=None,
+        help="Score overall minimum (0-1). Exit code 1 si en dessous.",
+    )
+    parser.add_argument(
+        "--min-faithfulness", type=float, default=None,
+        help="Score faithfulness minimum /5.",
+    )
+    parser.add_argument(
+        "--min-hallucination", type=float, default=None,
+        help="Score hallucination_absence minimum /5.",
+    )
     args = parser.parse_args()
 
     llm = MistralClient()
@@ -270,6 +282,23 @@ async def main() -> None:
                 continue
             print(f"\n  {r['question'][:50]}")
             print(f"    Retrieval: {'✅' if r['retrieval_success'] else '❌'} | Fidélité: {r['faithfulness']}/5 | Complétude: {r['completeness']}/5 | Anti-hallucination: {r['hallucination_absence']}/5 | Sources: {r['source_usage']}/5")
+
+    failures = []
+    s = report["summary"]
+    if args.threshold is not None and s["overall_quality"] < args.threshold:
+        failures.append(f"Overall {s['overall_quality']:.1%} < {args.threshold:.0%}")
+    if args.min_faithfulness is not None and s["avg_faithfulness"] < args.min_faithfulness:
+        failures.append(f"Faithfulness {s['avg_faithfulness']}/5 < {args.min_faithfulness}/5")
+    if args.min_hallucination is not None and s["avg_hallucination_absence"] < args.min_hallucination:
+        failures.append(f"Hallucination {s['avg_hallucination_absence']}/5 < {args.min_hallucination}/5")
+    if s["errors"] > 0:
+        failures.append(f"{s['errors']} erreur(s) lors de l'évaluation")
+
+    if failures:
+        print(f"\n❌ QUALITY GATE FAILED: {'; '.join(failures)}")
+        raise SystemExit(1)
+    else:
+        print(f"\n✅ Quality gate passed")
 
 
 if __name__ == "__main__":
