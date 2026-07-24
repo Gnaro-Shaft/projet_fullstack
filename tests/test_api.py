@@ -23,7 +23,7 @@ class FakeQdrant:
         return len(documents)
 
     def search(self, vector, limit=4):
-        return [{"title": "Bonjour et bienvenue", "text": "Comment faire pour danser.", "metadata": {}, "score": 0.99}]
+        return [{"title": "Bonjour et bienvenue comment faire", "text": "Comment faire pour danser.", "metadata": {}, "score": 0.99}]
 
     def delete_document(self, document_id, source):
         self.deleted.append((document_id, source))
